@@ -5,7 +5,6 @@ import sys
 import argparse
 from zipfile import ZipFile
 import os
-import hashlib
 
 app = Flask(__name__)
 
@@ -108,15 +107,15 @@ def download(filename, title, format):
             short_title = truncate_text(book_title, 50)
             short_author = truncate_text(book_author, 30)
             
-            # Создаем хеш для уникальности
-            content_hash = hashlib.md5(f"{book_title}{book_author}".encode()).hexdigest()[:8]
-            
-            output_filename = f"{short_title} - {short_author} [{content_hash}].{format}"
+            # Используем ID для уникальности вместо хэша
+            output_filename = f"{short_title} - {short_author} [{title}].{format}"
             output_filename = output_filename.replace('/', '_').replace('\\', '_')  # Удаляем недопустимые символы
             
-            # Если имя все еще слишком длинное, обрезаем его
+            # Если имя все еще слишком длинное, обрезаем его, оставляя ID
             if len(output_filename) > max_filename_length:
-                output_filename = output_filename[:max_filename_length-8] + f" [{content_hash}].{format}"
+                output_filename = f"{short_title} [{title}].{format}"
+                if len(output_filename) > max_filename_length:
+                    output_filename = f"{title}.{format}"
             
             output_path = os.path.join(temp_dir, output_filename)
             
