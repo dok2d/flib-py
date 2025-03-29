@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sortable Document Table</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary-color: #4361ee;
@@ -74,6 +73,22 @@
             margin: 0;
         }
 
+        td {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            position: relative;
+        }
+
+        td:hover {
+            overflow: visible;
+            white-space: normal;
+            z-index: 100;
+            background-color: var(--background-color);
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
         th, td {
             padding: 16px 20px;
             text-align: left;
@@ -128,9 +143,21 @@
             color: #495057;
         }
 
+        .title-cell, .author-cell {
+            max-width: 150px;
+        }
+
         .tags-cell {
             max-width: 180px;
+            white-space: normal;
         }
+
+        .tag {
+            display: inline-block;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }        
 
         .tags {
             display: flex;
@@ -173,6 +200,28 @@
             justify-content: center;
             margin-top: 30px;
             gap: 8px;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+            gap: 8px;
+            flex-wrap: wrap; /* Добавлено для переноса кнопок */
+            max-width: 100%;
+            overflow: hidden;
+        }
+
+        .page-btn {
+            padding: 10px 16px;
+            background-color: white;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+            margin: 2px; /* Добавлено для отступов */
         }
 
         .page-btn {
@@ -306,12 +355,21 @@
         .search-button i {
             margin-right: 8px;
         }
+        .pdf-link {
+            background-color: rgba(255, 0, 0, 0.1);
+            margin-left: 8px;
+        }
+
+        .pdf-link:hover {
+            background-color: #ff0000;
+            color: white;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1><i class="fas fa-table"></i>Ищем книжки</h1>
+            <h1>🗎 Search documents</h1>
         </header>
 
         <div class="search-container">
@@ -342,7 +400,6 @@
                     </tr>
                 </thead>
                 <tbody id="resultsBody">
-                    <!-- Results will be populated here by JavaScript -->
                 </tbody>
             </table>
         </div>
@@ -468,6 +525,12 @@ function performSearch() {
             displayResults(sorted);
         }
 
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });        
+
         function updateSortIndicators(field, direction) {
             // Remove all sort classes first
             document.querySelectorAll('th[data-sort]').forEach(th => {
@@ -503,12 +566,14 @@ function performSearch() {
                 row.style.animationDelay = `${index * 0.05}s`;
                 
                 row.innerHTML = `
-                <td><strong>${doc.title}</strong></td>
-                <td>${doc.author}</td>
-                <td>
-                  <a href="${doc.link}" class="download-link" download>
-                    <i class="fas fa-download"></i> Download
-                  </a>
+                <td class="title-cell" title="${ doc.title }"><strong>${ doc.title }</strong></td>
+                <td class="author-cell" title="${ doc.author }">${ doc.author }</td>
+                <td class="actions-cell">
+                    <div class="action-buttons">
+                        <a href="${doc.link}" class="download-link" title="Скачать FB2">
+                            <i class="fas fa-download"></i> FB2
+                        </a>
+                    </div>
                 </td>
                 <td class="date-cell">${doc.date}</td>
                 <td class="size-cell">${doc.size}</td>
@@ -529,6 +594,16 @@ function performSearch() {
         function updatePagination(totalPages) {
             const pagination = document.getElementById('pagination');
             pagination.innerHTML = '';
+                
+            // Максимальное количество отображаемых кнопок страниц
+            const maxVisiblePages = 10;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+                
+            // Корректировка, если мы в начале или конце
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
             
             // Previous button
             const prevBtn = document.createElement('button');
@@ -538,8 +613,27 @@ function performSearch() {
             prevBtn.disabled = currentPage === 1;
             pagination.appendChild(prevBtn);
             
+            // Первая страница (если не видна)
+            if (startPage > 1) {
+                const firstBtn = document.createElement('button');
+                firstBtn.className = 'page-btn';
+                firstBtn.textContent = '1';
+                firstBtn.onclick = () => {
+                    currentPage = 1;
+                    sortDocuments(currentSortField, currentSortDirection);
+                };
+                pagination.appendChild(firstBtn);
+                
+                if (startPage > 2) {
+                    const ellipsis = document.createElement('span');
+                    ellipsis.className = 'page-ellipsis';
+                    ellipsis.textContent = '...';
+                    pagination.appendChild(ellipsis);
+                }
+            }
+            
             // Page buttons
-            for (let i = 1; i <= totalPages; i++) {
+            for (let i = startPage; i <= endPage; i++) {
                 const pageBtn = document.createElement('button');
                 pageBtn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
                 pageBtn.textContent = i;
@@ -548,6 +642,25 @@ function performSearch() {
                     sortDocuments(currentSortField, currentSortDirection);
                 };
                 pagination.appendChild(pageBtn);
+            }
+            
+            // Последняя страница (если не видна)
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    const ellipsis = document.createElement('span');
+                    ellipsis.className = 'page-ellipsis';
+                    ellipsis.textContent = '...';
+                    pagination.appendChild(ellipsis);
+                }
+                
+                const lastBtn = document.createElement('button');
+                lastBtn.className = 'page-btn';
+                lastBtn.textContent = totalPages;
+                lastBtn.onclick = () => {
+                    currentPage = totalPages;
+                    sortDocuments(currentSortField, currentSortDirection);
+                };
+                pagination.appendChild(lastBtn);
             }
             
             // Next button

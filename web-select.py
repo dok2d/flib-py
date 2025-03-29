@@ -1,9 +1,11 @@
+# web-select.py
 from flask import Flask, render_template, request, send_file
 import sqlite3
 import sys
 import argparse
 from zipfile import ZipFile
 import os
+import hashlib
 
 app = Flask(__name__)
 
@@ -18,6 +20,11 @@ def size_format(size_bytes):
         return f"{size_bytes / 1024:.2f} Kb"
     else:
         return f"{size_bytes / 1048576:.2f} Mb"
+
+def truncate_text(text, max_length=50):
+    if len(text) > max_length:
+        return text[:max_length-3] + '...'
+    return text
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -43,7 +50,6 @@ def index():
         results = cursor.fetchall()
         conn.close()
         
-        # Если запрос AJAX, возвращаем JSON
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return {
                 'results': [
@@ -56,26 +62,21 @@ def index():
                         'date': r[6],
                         'language': r[7],
                         'tags': [r[8]] if r[8] else [],
-                        'link': f"/download/{r[9]}/{r[3]}.{r[5]}"
+                        'link': f"/download/{r[9]}/{r[3]}.{r[5]}",
+                        'full_title': r[2],  # Сохраняем полное название для tooltip
+                        'full_author': r[0]  # Сохраняем полное имя автора для tooltip
                     } for r in results
                 ]
             }
     
-    return render_template(
-        'results.html', 
-        results=results, 
-        search_term=search_term,
-        sort_by=sort_by,
-        size_format=size_format
-    )
+    return render_template('results.html', results=results, search_term=search_term, sort_by=sort_by, size_format=size_format)
 
 @app.route('/download/<filename>/<title>.<format>')
 def download(filename, title, format):
     try:
-        # Формируем имя архива: заменяем .inp на .zip
         archive_name = filename.replace('.inp', '.zip') if filename.endswith('.inp') else f"{filename}.zip"
         archive_path = os.path.join(args.archives_path, archive_name)
-        
+
         print(f"[DEBUG] Archive path: {archive_path}")
         print(f"[DEBUG] Looking for file: {title}.{format} in archive")
 
@@ -88,11 +89,9 @@ def download(filename, title, format):
             if target_file not in zip.namelist():
                 return f"File '{target_file}' not found in archive", 404
 
-            # Создаем временную директорию
             temp_dir = "temp_extract"
             os.makedirs(temp_dir, exist_ok=True)
             
-            # Получаем метаданные из БД
             conn = get_db(args.database)
             cursor = conn.cursor()
             cursor.execute("SELECT title, author FROM books WHERE id = ?", (title,))
@@ -103,10 +102,24 @@ def download(filename, title, format):
                 return "Book metadata not found", 404
             
             book_title, book_author = book_data
-            output_filename = f"{book_title} - {book_author}.{format}"
+            
+            # Ограничиваем длину названия и автора
+            max_filename_length = 100  # Максимальная длина имени файла
+            short_title = truncate_text(book_title, 50)
+            short_author = truncate_text(book_author, 30)
+            
+            # Создаем хеш для уникальности
+            content_hash = hashlib.md5(f"{book_title}{book_author}".encode()).hexdigest()[:8]
+            
+            output_filename = f"{short_title} - {short_author} [{content_hash}].{format}"
+            output_filename = output_filename.replace('/', '_').replace('\\', '_')  # Удаляем недопустимые символы
+            
+            # Если имя все еще слишком длинное, обрезаем его
+            if len(output_filename) > max_filename_length:
+                output_filename = output_filename[:max_filename_length-8] + f" [{content_hash}].{format}"
+            
             output_path = os.path.join(temp_dir, output_filename)
             
-            # Извлекаем и сохраняем файл
             file_content = zip.read(target_file)
             with open(output_path, 'wb') as f:
                 f.write(file_content)
@@ -130,7 +143,6 @@ if __name__ == '__main__':
     parser.add_argument('--archives-path', required=True, help='Path to the directory containing book archives (.zip)')
     args = parser.parse_args()
 
-    # Проверяем существование базы данных и директории с архивами
     if not os.path.isfile(args.database):
         print(f"Error: Database file '{args.database}' not found.")
         sys.exit(1)
