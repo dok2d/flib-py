@@ -71,43 +71,39 @@ def index():
 
 @app.route('/download/<filename>/<title>.<format>')
 def download(filename, title, format):
-    # Убираем .inp из имени архива (если есть)
-    archive_base = filename.split('.')[0]  # fb2-000024-030559.inp → fb2-000024-030559
-    archive_path = os.path.join(args.archives_path, f"{archive_base}.zip")
-    print(f"[DEBUG] Archive path: {archive_path}")  
-
-    if not os.path.isfile(archive_path):
-        print(f"[ERROR] Archive not found: {archive_path}")
-        return f"Archive not found: {archive_path}", 404
-
     try:
+        # Формируем имя архива: заменяем .inp на .zip
+        archive_name = filename.replace('.inp', '.zip') if filename.endswith('.inp') else f"{filename}.zip"
+        archive_path = os.path.join(args.archives_path, archive_name)
+        
+        print(f"[DEBUG] Archive path: {archive_path}")
+        print(f"[DEBUG] Looking for file: {title}.{format} in archive")
+
+        if not os.path.isfile(archive_path):
+            return f"Archive not found: {archive_name}", 404
+
         with ZipFile(archive_path, 'r') as zip:
-            target_file = f"{title}.{format}"  # 40921.fb2
-            print(f"[DEBUG] Looking for file: {target_file}")  
+            target_file = f"{title}.{format}"
             
             if target_file not in zip.namelist():
-                print(f"[ERROR] File '{target_file}' not found in archive.")
-                return f"File '{target_file}' not found in archive.", 404
-            
-            # Извлекаем файл во временную папку
+                return f"File '{target_file}' not found in archive", 404
+
+            # Создаем временную директорию
             temp_dir = "temp_extract"
             os.makedirs(temp_dir, exist_ok=True)
             
-            # Формируем имя файла: "Название - Автор.fb2"
-            # Предполагаем, что в БД есть поля title и author
+            # Получаем метаданные из БД
             conn = get_db(args.database)
             cursor = conn.cursor()
-            cursor.execute("SELECT title, author FROM books WHERE id = ?", (title,))  # title = ID файла (40921)
+            cursor.execute("SELECT title, author FROM books WHERE id = ?", (title,))
             book_data = cursor.fetchone()
             conn.close()
             
             if not book_data:
-                return "Book metadata not found in database.", 404
+                return "Book metadata not found", 404
             
             book_title, book_author = book_data
-            safe_title = "".join(c for c in book_title if c.isalnum() or c in " -_")
-            safe_author = "".join(c for c in book_author if c.isalnum() or c in " -_")
-            output_filename = f"{safe_title} - {safe_author}.{format}"
+            output_filename = f"{book_title} - {book_author}.{format}"
             output_path = os.path.join(temp_dir, output_filename)
             
             # Извлекаем и сохраняем файл
@@ -115,16 +111,15 @@ def download(filename, title, format):
             with open(output_path, 'wb') as f:
                 f.write(file_content)
             
-            # Отправляем файл пользователю
             return send_file(
                 output_path,
                 as_attachment=True,
                 download_name=output_filename,
-                mimetype=f"application/{format}"  # Для FB2: "application/fb2+zip"
+                mimetype=f"application/{format}"
             )
             
     except Exception as e:
-        print(f"[ERROR] Extraction failed: {str(e)}")
+        print(f"[ERROR] Download failed: {str(e)}")
         return f"Error: {str(e)}", 500
 
 if __name__ == '__main__':
