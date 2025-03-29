@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sortable Document Table</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3a0ca3;
+            --dark-color: #2b2d42;
+            --light-color: #f8f9fa;
+            --background-color: #ffffff;
+            --hover-color: #3f37c9;
+            --text-color: #2b2d42;
+            --border-color: #e9ecef;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 30px auto;
+            padding: 30px;
+            background-color: var(--background-color);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .subtitle {
+            color: #6c757d;
+            font-size: 1.1rem;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0;
+        }
+
+        th, td {
+            padding: 16px 20px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: var(--primary-color);
+            color: white;
+            position: sticky;
+            top: 0;
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        th:hover {
+            background-color: var(--hover-color);
+        }
+
+        th.sort-asc::after {
+            content: " ↑";
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            margin-left: 6px;
+        }
+
+        th.sort-desc::after {
+            content: " ↓";
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            margin-left: 6px;
+        }
+
+        tr:not(:last-child) {
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        tr:nth-child(even) {
+            background-color: rgba(248, 249, 250, 0.5);
+        }
+
+        tr:hover {
+            background-color: rgba(67, 97, 238, 0.08);
+        }
+
+        .id-cell, .size-cell, .date-cell {
+            text-align: center;
+            font-family: 'Courier New', Courier, monospace;
+            color: #495057;
+        }
+
+        .tags-cell {
+            max-width: 180px;
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .tag {
+            background-color: rgba(58, 12, 163, 0.1);
+            color: var(--secondary-color);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            border: 1px solid rgba(58, 12, 163, 0.2);
+            white-space: nowrap;
+        }
+
+        .download-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+            padding: 6px 12px;
+            border-radius: 6px;
+            background-color: rgba(67, 97, 238, 0.1);
+        }
+
+        .download-link:hover {
+            color: white;
+            background-color: var(--primary-color);
+            transform: translateY(-1px);
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+            gap: 8px;
+        }
+
+        .page-btn {
+            padding: 10px 16px;
+            background-color: white;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .page-btn:hover:not(.active) {
+            background-color: rgba(67, 97, 238, 0.1);
+            border-color: var(--primary-color);
+        }
+
+        .page-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .results-count {
+            margin-bottom: 20px;
+            font-weight: 500;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            th, td {
+                padding: 12px 15px;
+                font-size: 14px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+
+        /* Animation for table rows */
+        @keyframes slideIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(16px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
+
+        tbody tr {
+            animation: slideIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            opacity: 0;
+        }
+
+        /* Staggered animation delays */
+        tbody tr:nth-child(1) { animation-delay: 0.05s; }
+        tbody tr:nth-child(2) { animation-delay: 0.1s; }
+        tbody tr:nth-child(3) { animation-delay: 0.15s; }
+        tbody tr:nth-child(4) { animation-delay: 0.2s; }
+        tbody tr:nth-child(5) { animation-delay: 0.25s; }
+        tbody tr:nth-child(6) { animation-delay: 0.3s; }
+
+        /* Loading animation */
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(67, 97, 238, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .search-container {
+            margin-bottom: 30px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .search-input {
+            flex: 1;
+            padding: 12px 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .search-input:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+        
+        .search-button {
+            padding: 12px 25px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .search-button:hover {
+            background-color: var(--hover-color);
+            transform: translateY(-2px);
+        }
+        
+        .search-button i {
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-table"></i>Ищем книжки</h1>
+        </header>
+
+        <div class="search-container">
+          <input type="text" id="searchInput" class="search-input" placeholder="Search by title, author, tags..." value="{{ search_term if search_term else '' }}">
+          <button class="search-button" onclick="performSearch()">
+              <i class="fas fa-search"></i> Search
+          </button>
+      </div>
+
+      <div class="results-count">
+          <span id="docCount">Loading documents...</span>
+          <span class="loader"></span>
+      </div>
+      
+        <div class="table-container">
+            <table id="resultsTable">
+                <thead>
+                    <tr>
+                      <th data-sort="title">Title</th>
+                      <th data-sort="author">Author</th>
+                      <th>Actions</th>
+                      <th data-sort="date">Upload Date</th>
+                      <th data-sort="size">File Size</th>
+                      <th data-sort="genre">Category</th>
+                      <th data-sort="language">Language</th>
+                      <th data-sort="id">ID</th>
+                      <th data-sort="tags">Tags</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsBody">
+                    <!-- Results will be populated here by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination" id="pagination">
+            <button class="page-btn" onclick="previousPage()"><i class="fas fa-chevron-left"></i></button>
+            <button class="page-btn active">1</button>
+            <button class="page-btn">2</button>
+            <button class="page-btn" onclick="nextPage()"><i class="fas fa-chevron-right"></i></button>
+        </div>
+    </div>
+
+    <script>
+function performSearch() {
+    const searchTerm = document.getElementById('searchInput').value.trim();
+    if (!searchTerm) return;
+    
+    document.querySelector('.loader').style.display = 'inline-block';
+    document.getElementById('docCount').textContent = 'Searching...';
+    
+    fetch('/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: `search_term=${encodeURIComponent(searchTerm)}&sort_by=${currentSortField}`
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data && data.results) {
+            // Создаем новый массив вместо изменения const
+            documents.length = 0;
+            Array.prototype.push.apply(documents, data.results);
+            
+            currentPage = 1;
+            sortDocuments(currentSortField, currentSortDirection);
+        } else {
+            throw new Error('Invalid response format');
+        }
+    })
+    .catch(error => {
+        console.error('Search error:', error);
+        document.getElementById('docCount').textContent = 'Error: ' + error.message;
+    })
+    .finally(() => {
+        document.querySelector('.loader').style.display = 'none';
+    });
+}
+  </script>
+
+    <script>
+        // Enhanced sample data
+        let documents = [
+{% for result in results %}
+    {
+        id: {{ result[3] }},
+        title: "{{ result[2] }}",
+        author: "{{ result[0] }}",
+        genre: "{{ result[1] }}",
+        size: "{{ size_format(result[4]) }}",
+        date: "{{ result[6] }}",
+        language: "{{ result[7] }}",
+        tags: ["{{ result[8] }}"],
+        filename: "Download",
+        link: "/download/{{ result[9] }}/{{ result[3] }}.{{ result[5] }}"
+    }{% if not loop.last %},{% endif %}
+{% endfor %}
+];
+        // Variables for sorting and pagination
+        let currentSortField = 'id';
+        let currentSortDirection = 'asc';
+        let currentPage = 1;
+        const itemsPerPage = 45;
+
+        function sortDocuments(field, direction) {
+            const sorted = [...documents].sort((a, b) => {
+                // Special handling for size (extract the number)
+                if (field === 'size') {
+                    const sizeA = parseFloat(a.size);
+                    const sizeB = parseFloat(b.size);
+                    return direction === 'asc' ? sizeA - sizeB : sizeB - sizeA;
+                }
+                
+                // Special handling for dates
+                if (field === 'date') {
+                    return direction === 'asc' 
+                        ? new Date(a.date) - new Date(b.date) 
+                        : new Date(b.date) - new Date(a.date);
+                }
+                
+                // Special handling for ID (numeric)
+                if (field === 'id') {
+                    return direction === 'asc' ? a.id - b.id : b.id - a.id;
+                }
+                
+                // For tags, sort by the first tag alphabetically
+                if (field === 'tags') {
+                    return direction === 'asc' 
+                        ? a.tags[0].localeCompare(b.tags[0]) 
+                        : b.tags[0].localeCompare(a.tags[0]);
+                }
+                
+                // Default string comparison
+                return direction === 'asc' 
+                    ? a[field].toString().localeCompare(b[field].toString()) 
+                    : b[field].toString().localeCompare(a[field].toString());
+            });
+            
+            // Update sort indicators in table headers
+            updateSortIndicators(field, direction);
+            
+            // Store current sort settings
+            currentSortField = field;
+            currentSortDirection = direction;
+            
+            // Display the sorted results with pagination
+            displayResults(sorted);
+        }
+
+        function updateSortIndicators(field, direction) {
+            // Remove all sort classes first
+            document.querySelectorAll('th[data-sort]').forEach(th => {
+                th.classList.remove('sort-asc', 'sort-desc');
+            });
+            
+            // Add the appropriate class to the currently sorted column
+            const currentTh = document.querySelector(`th[data-sort="${field}"]`);
+            if (currentTh) {
+                currentTh.classList.add(direction === 'asc' ? 'sort-asc' : 'sort-desc');
+            }
+        }
+
+        function displayResults(results) {
+            const tbody = document.getElementById('resultsBody');
+            tbody.innerHTML = '';
+            
+            document.getElementById('docCount').textContent = `Showing ${results.length} documents`;
+            document.querySelector('.loader').style.display = 'none';
+            
+            // Calculate pagination
+            const totalPages = Math.ceil(results.length / itemsPerPage);
+            updatePagination(totalPages);
+            
+            // Get current page items
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const paginatedItems = results.slice(startIndex, endIndex);
+            
+            // Add items to table
+            paginatedItems.forEach((doc, index) => {
+                const row = document.createElement('tr');
+                row.style.animationDelay = `${index * 0.05}s`;
+                
+                row.innerHTML = `
+                <td><strong>${doc.title}</strong></td>
+                <td>${doc.author}</td>
+                <td>
+                  <a href="${doc.link}" class="download-link" download>
+                    <i class="fas fa-download"></i> Download
+                  </a>
+                </td>
+                <td class="date-cell">${doc.date}</td>
+                <td class="size-cell">${doc.size}</td>
+                <td>${doc.genre}</td>
+                <td>${doc.language}</td>
+                <td class="id-cell">${doc.id}</td>
+                <td class="tags-cell">
+                  <div class="tags">
+                    ${doc.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                    </div>
+                </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        function updatePagination(totalPages) {
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+            
+            // Previous button
+            const prevBtn = document.createElement('button');
+            prevBtn.className = 'page-btn';
+            prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            prevBtn.onclick = previousPage;
+            prevBtn.disabled = currentPage === 1;
+            pagination.appendChild(prevBtn);
+            
+            // Page buttons
+            for (let i = 1; i <= totalPages; i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
+                pageBtn.textContent = i;
+                pageBtn.onclick = () => {
+                    currentPage = i;
+                    sortDocuments(currentSortField, currentSortDirection);
+                };
+                pagination.appendChild(pageBtn);
+            }
+            
+            // Next button
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'page-btn';
+            nextBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            nextBtn.onclick = nextPage;
+            nextBtn.disabled = currentPage === totalPages;
+            pagination.appendChild(nextBtn);
+        }
+
+        function nextPage() {
+            const totalPages = Math.ceil(documents.length / itemsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                sortDocuments(currentSortField, currentSortDirection);
+            }
+        }
+
+        function previousPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                sortDocuments(currentSortField, currentSortDirection);
+            }
+        }
+
+        // Set up event listeners for sorting
+        function setupSorting() {
+            document.querySelectorAll('th[data-sort]').forEach(th => {
+                th.addEventListener('click', () => {
+                    const field = th.getAttribute('data-sort');
+                    let direction = 'asc';
+                    
+                    // If we're already sorting by this field, reverse the direction
+                    if (currentSortField === field) {
+                        direction = currentSortDirection === 'asc' ? 'desc' : 'asc';
+                    }
+                    
+                    // Reset to first page when sorting changes
+                    currentPage = 1;
+                    
+                    sortDocuments(field, direction);
+                });
+            });
+        }
+
+        // Simulate loading delay for demo purposes
+        function simulateLoading() {
+            setTimeout(() => {
+                sortDocuments(currentSortField, currentSortDirection);
+            }, 1000);
+        }
+
+        // Initial load - set up sorting and show documents
+        window.onload = function() {
+            setupSorting();
+            simulateLoading();
+        };
+    </script>
+</body>
+</html>
