@@ -1,14 +1,18 @@
-# web-select.py
 from flask import Flask, render_template, request, send_file
 import sqlite3
-import sys
-import argparse
-from zipfile import ZipFile
 import os
+from zipfile import ZipFile
+import argparse
 
 app = Flask(__name__)
 
-def get_db(db_file):
+# Конфигурация через переменные окружения
+DATABASE_PATH = os.environ.get('DATABASE_PATH', 'books.db')
+ARCHIVES_PATH = os.environ.get('ARCHIVES_PATH', 'archives')
+HOST = os.environ.get('HOST', '127.0.0.1')
+PORT = int(os.environ.get('PORT', '5000'))
+
+def get_db(db_file=DATABASE_PATH):
     conn = sqlite3.connect(db_file)
     return conn
 
@@ -21,6 +25,8 @@ def size_format(size_bytes):
         return f"{size_bytes / 1048576:.2f} Mb"
 
 def truncate_text(text, max_length=50):
+    if not text:
+        return ''
     if len(text) > max_length:
         return text[:max_length-3] + '...'
     return text
@@ -34,7 +40,7 @@ def index():
     if request.method == 'POST':
         search_term = request.form.get('search_term', '')
         sort_by = request.form.get('sort_by', 'title')
-        conn = get_db(args.database)
+        conn = get_db()
         cursor = conn.cursor()
         query = """
             SELECT * FROM books 
@@ -62,8 +68,8 @@ def index():
                         'language': r[7],
                         'tags': [r[8]] if r[8] else [],
                         'link': f"/download/{r[9]}/{r[3]}.{r[5]}",
-                        'full_title': r[2],  # Сохраняем полное название для tooltip
-                        'full_author': r[0]  # Сохраняем полное имя автора для tooltip
+                        'full_title': r[2],
+                        'full_author': r[0]
                     } for r in results
                 ]
             }
@@ -74,11 +80,8 @@ def index():
 def download(filename, title, format):
     try:
         archive_name = filename.replace('.inp', '.zip') if filename.endswith('.inp') else f"{filename}.zip"
-        archive_path = os.path.join(args.archives_path, archive_name)
-
-        print(f"[DEBUG] Archive path: {archive_path}")
-        print(f"[DEBUG] Looking for file: {title}.{format} in archive")
-
+        archive_path = os.path.join(ARCHIVES_PATH, archive_name)
+        
         if not os.path.isfile(archive_path):
             return f"Archive not found: {archive_name}", 404
 
@@ -91,7 +94,7 @@ def download(filename, title, format):
             temp_dir = "temp_extract"
             os.makedirs(temp_dir, exist_ok=True)
             
-            conn = get_db(args.database)
+            conn = get_db()
             cursor = conn.cursor()
             cursor.execute("SELECT title, author FROM books WHERE id = ?", (title,))
             book_data = cursor.fetchone()
@@ -101,17 +104,13 @@ def download(filename, title, format):
                 return "Book metadata not found", 404
             
             book_title, book_author = book_data
-            
-            # Ограничиваем длину названия и автора
-            max_filename_length = 100  # Максимальная длина имени файла
             short_title = truncate_text(book_title, 50)
             short_author = truncate_text(book_author, 30)
             
-            # Используем ID для уникальности вместо хэша
             output_filename = f"{short_title} - {short_author} [{title}].{format}"
-            output_filename = output_filename.replace('/', '_').replace('\\', '_')  # Удаляем недопустимые символы
+            output_filename = output_filename.replace('/', '_').replace('\\', '_')
             
-            # Если имя все еще слишком длинное, обрезаем его, оставляя ID
+            max_filename_length = 100
             if len(output_filename) > max_filename_length:
                 output_filename = f"{short_title} [{title}].{format}"
                 if len(output_filename) > max_filename_length:
@@ -134,20 +133,31 @@ def download(filename, title, format):
         print(f"[ERROR] Download failed: {str(e)}")
         return f"Error: {str(e)}", 500
 
-if __name__ == '__main__':
+def parse_arguments():
     parser = argparse.ArgumentParser(description='Book search web application')
-    parser.add_argument('--database', required=True, help='Path to SQLite database file')
-    parser.add_argument('--host', default='127.0.0.1', help='Host address to run the server on')
-    parser.add_argument('--port', type=int, default=5000, help='Port number to run the server on')
-    parser.add_argument('--archives-path', required=True, help='Path to the directory containing book archives (.zip)')
-    args = parser.parse_args()
+    parser.add_argument('--database', default=DATABASE_PATH, help='Path to SQLite database file')
+    parser.add_argument('--archives-path', default=ARCHIVES_PATH, help='Path to archives directory')
+    parser.add_argument('--host', default=HOST, help='Host address to bind to')
+    parser.add_argument('--port', type=int, default=PORT, help='Port number to listen on')
+    return parser.parse_args()
 
-    if not os.path.isfile(args.database):
-        print(f"Error: Database file '{args.database}' not found.")
-        sys.exit(1)
+if __name__ == '__main__':
+    args = parse_arguments()
     
-    if not os.path.isdir(args.archives_path):
-        print(f"Error: Archives directory '{args.archives_path}' not found.")
-        sys.exit(1)
+    # Обновляем конфигурацию из аргументов командной строки
+    DATABASE_PATH = args.database
+    ARCHIVES_PATH = args.archives_path
+    HOST = args.host
+    PORT = args.port
+    
+    # Проверка существования необходимых файлов и директорий
+    if not os.path.isfile(DATABASE_PATH):
+        print(f"Error: Database file '{DATABASE_PATH}' not found.")
+        exit(1)
+    
+    if not os.path.isdir(ARCHIVES_PATH):
+        print(f"Error: Archives directory '{ARCHIVES_PATH}' not found.")
+        exit(1)
 
-    app.run(host=args.host, port=args.port, debug=True)
+    app.run(host=HOST, port=PORT, debug=True)
+
