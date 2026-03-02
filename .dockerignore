@@ -1,0 +1,10 @@
+.git
+*.inpx
+*.db
+*.zip
+temp/
+temp_extract/
+__pycache__/
+*.pyc
+*.pyo
+.env

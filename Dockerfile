@@ -4,9 +4,11 @@ RUN apt-get update && apt-get install -y \
     unzip \
     && rm -rf /var/lib/apt/lists/*
 
+RUN adduser --disabled-password --gecos '' appuser
+
 WORKDIR /app
 
-COPY . .
+COPY --chown=appuser:appuser . .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
@@ -20,5 +22,7 @@ ENV PORT=5000
 VOLUME /app/data
 
 EXPOSE 5000
+
+USER appuser
 
 CMD ["sh", "-c", "flask run --host=$HOST --port=$PORT"]
