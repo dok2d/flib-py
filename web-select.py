@@ -9,7 +9,6 @@ import logging
 
 app = Flask(__name__)
 
-# Default configuration from environment variables
 app.config['DATABASE_PATH'] = os.environ.get('DATABASE_PATH', 'books.db')
 app.config['ARCHIVES_PATH'] = os.environ.get('ARCHIVES_PATH', 'archives')
 HOST = os.environ.get('HOST', '127.0.0.1')
@@ -17,7 +16,6 @@ PORT = int(os.environ.get('PORT', '5000'))
 
 logger = logging.getLogger(__name__)
 
-# Whitelist for ORDER BY column names
 VALID_SORT_COLUMNS = {
     'title':    'title',
     'author':   'author',
@@ -30,15 +28,57 @@ VALID_SORT_COLUMNS = {
 }
 
 
+# ─── Data normalization ───────────────────────────────────────────────────────
+
+def format_author(raw):
+    """Normalize INPX author: 'Last,First,Middle:' → 'First Middle Last'.
+    Idempotent: already-clean values pass through unchanged."""
+    if not raw:
+        return ''
+    if ':' not in raw and ',' not in raw:
+        return raw.strip()
+    authors = []
+    for part in raw.split(':'):
+        part = part.strip()
+        if not part:
+            continue
+        components = [c.strip() for c in part.split(',') if c.strip()]
+        if not components:
+            continue
+        if len(components) == 1:
+            authors.append(components[0])
+        else:
+            last = components[0]
+            rest = ' '.join(components[1:])
+            authors.append(f'{rest} {last}'.strip())
+    return ', '.join(authors) if authors else raw.strip()
+
+
+def format_genre(raw):
+    """Normalize INPX genre: 'sf_history:sf_action:' → 'sf_history, sf_action'.
+    Idempotent: already-clean values pass through unchanged."""
+    if not raw:
+        return ''
+    if ':' not in raw:
+        return raw.strip()
+    return ', '.join(g.strip() for g in raw.split(':') if g.strip())
+
+
+def _normalize(r):
+    """Return row with cleaned author and genre fields."""
+    return (format_author(r[0]), format_genre(r[1])) + r[2:]
+
+
+# ─── DB / helpers ─────────────────────────────────────────────────────────────
+
 def get_db():
     conn = sqlite3.connect(app.config['DATABASE_PATH'])
-    # Register Python's unicode-aware lower() for case-insensitive search
     conn.create_function('py_lower', 1, lambda s: s.lower() if s else '')
     return conn
 
 
 def safe_archive_path(filename):
-    """Resolve archive path, returning None if path traversal is detected."""
+    """Resolve archive path; return None if path traversal detected."""
     archives_base = os.path.realpath(app.config['ARCHIVES_PATH'])
     archive_name = (filename.replace('.inp', '.zip')
                     if filename.endswith('.inp') else f"{filename}.zip")
@@ -69,6 +109,30 @@ def truncate_text(text, max_length=50):
     if len(text) > max_length:
         return text[:max_length - 3] + '...'
     return text
+
+
+def _search(search_term, sort_col):
+    """Return normalized rows matching the multi-token search term."""
+    tokens = [t for t in search_term.lower().split() if t]
+    if not tokens:
+        return []
+    conditions = ' AND '.join(
+        ['(py_lower(author) LIKE ? OR py_lower(genre) LIKE ?'
+         ' OR py_lower(title) LIKE ? OR py_lower(format) LIKE ?'
+         ' OR py_lower(lang) LIKE ? OR py_lower(tags) LIKE ?)']
+        * len(tokens)
+    )
+    params = tuple(f'%{t}%' for t in tokens for _ in range(6))
+    conn = get_db()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            f"SELECT * FROM books WHERE {conditions} ORDER BY {sort_col}",
+            params,
+        )
+        return [_normalize(r) for r in cursor.fetchall()]
+    finally:
+        conn.close()
 
 
 # ─── FB2 reader ───────────────────────────────────────────────────────────────
@@ -123,7 +187,7 @@ def _fb2_node_to_html(elem):
         href = _html.escape(elem.get(f'{{{_XLINK_NS}}}href', '#'))
         return f'<a href="{href}">{inner}</a>{tail}'
     elif tag == 'image':
-        return tail  # skip embedded images
+        return tail
     else:
         return f'{inner}{tail}'
 
@@ -133,7 +197,6 @@ def fb2_to_html(content):
         root = ET.fromstring(content)
     except ET.ParseError as e:
         return f'<p class="error">Error parsing book: {_html.escape(str(e))}</p>'
-
     parts = []
     for body in root.iter(f'{{{_FB2_NS}}}body'):
         if body.get('name') == 'notes':
@@ -152,23 +215,10 @@ def index():
     sort_by = "title"
 
     if request.method == 'POST':
-        search_term  = request.form.get('search_term', '')
-        sort_by_raw  = request.form.get('sort_by', 'title')
-        sort_col     = VALID_SORT_COLUMNS.get(sort_by_raw, 'title')
-        search_lower = f'%{search_term.lower()}%'
-
-        conn   = get_db()
-        cursor = conn.cursor()
-        query  = f"""
-            SELECT * FROM books
-            WHERE py_lower(author) LIKE ? OR py_lower(genre) LIKE ?
-               OR py_lower(title)  LIKE ? OR py_lower(format) LIKE ?
-               OR py_lower(lang)   LIKE ? OR py_lower(tags)   LIKE ?
-            ORDER BY {sort_col}
-        """
-        cursor.execute(query, (search_lower,) * 6)
-        results = cursor.fetchall()
-        conn.close()
+        search_term = request.form.get('search_term', '')
+        sort_by_raw = request.form.get('sort_by', 'title')
+        sort_col    = VALID_SORT_COLUMNS.get(sort_by_raw, 'title')
+        results     = _search(search_term, sort_col)
 
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return {
@@ -203,7 +253,6 @@ def download(filename, title, format):
         archive_path = safe_archive_path(filename)
         if archive_path is None:
             return "Invalid filename", 400
-
         if not os.path.isfile(archive_path):
             return "Archive not found", 404
 
@@ -212,18 +261,20 @@ def download(filename, title, format):
             if target_file not in zip_file.namelist():
                 return "File not found in archive", 404
 
-            conn   = get_db()
-            cursor = conn.cursor()
-            cursor.execute("SELECT title, author FROM books WHERE id = ?", (title,))
-            book_data = cursor.fetchone()
-            conn.close()
+            conn = get_db()
+            try:
+                cursor = conn.cursor()
+                cursor.execute("SELECT title, author FROM books WHERE id = ?", (title,))
+                book_data = cursor.fetchone()
+            finally:
+                conn.close()
 
             if not book_data:
                 return "Book metadata not found", 404
 
             book_title, book_author = book_data
-            short_title  = truncate_text(book_title, 50)
-            short_author = truncate_text(book_author, 30)
+            short_title  = truncate_text(format_author(book_title) if ',' in book_title else book_title, 50)
+            short_author = truncate_text(format_author(book_author), 30)
 
             output_filename = f"{short_title} - {short_author} [{title}].{format}"
             output_filename = output_filename.replace('/', '_').replace('\\', '_')
@@ -236,9 +287,8 @@ def download(filename, title, format):
             os.makedirs(temp_dir, exist_ok=True)
             output_path = os.path.join(temp_dir, output_filename)
 
-            file_content = zip_file.read(target_file)
             with open(output_path, 'wb') as f:
-                f.write(file_content)
+                f.write(zip_file.read(target_file))
 
             return send_file(
                 output_path,
@@ -256,12 +306,10 @@ def download(filename, title, format):
 def read_book(filename, title, format):
     if format.lower() != 'fb2':
         return "Online reading is only supported for FB2 format", 400
-
     try:
         archive_path = safe_archive_path(filename)
         if archive_path is None:
             return "Invalid filename", 400
-
         if not os.path.isfile(archive_path):
             return "Archive not found", 404
 
@@ -271,14 +319,16 @@ def read_book(filename, title, format):
                 return "File not found in archive", 404
             content = zip_file.read(target_file)
 
-        conn   = get_db()
-        cursor = conn.cursor()
-        cursor.execute("SELECT title, author FROM books WHERE id = ?", (title,))
-        book_data = cursor.fetchone()
-        conn.close()
+        conn = get_db()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT title, author FROM books WHERE id = ?", (title,))
+            book_data = cursor.fetchone()
+        finally:
+            conn.close()
 
         book_title  = book_data[0] if book_data else title
-        book_author = book_data[1] if book_data else ""
+        book_author = format_author(book_data[1]) if book_data else ""
 
         return render_template(
             'reader.html',
@@ -299,10 +349,8 @@ def parse_arguments():
                         help='Path to SQLite database file')
     parser.add_argument('--archives-path', default=app.config['ARCHIVES_PATH'],
                         help='Path to archives directory')
-    parser.add_argument('--host', default=HOST,
-                        help='Host address to bind to')
-    parser.add_argument('--port', type=int, default=PORT,
-                        help='Port number to listen on')
+    parser.add_argument('--host', default=HOST, help='Host address to bind to')
+    parser.add_argument('--port', type=int, default=PORT, help='Port number to listen on')
     return parser.parse_args()
 
 
@@ -314,7 +362,6 @@ if __name__ == '__main__':
     if not os.path.isfile(app.config['DATABASE_PATH']):
         print(f"Error: Database file '{app.config['DATABASE_PATH']}' not found.")
         exit(1)
-
     if not os.path.isdir(app.config['ARCHIVES_PATH']):
         print(f"Error: Archives directory '{app.config['ARCHIVES_PATH']}' not found.")
         exit(1)
