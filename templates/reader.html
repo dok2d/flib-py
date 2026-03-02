@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ book_title | e }} — {{ book_author | e }}</title>
+    <style>
+        :root {
+            --font-size: 18px;
+            --line-height: 1.8;
+            --bg: #fdf6e3;
+            --text: #333333;
+            --link: #4361ee;
+            --toolbar-bg: rgba(253, 246, 227, 0.95);
+            --border: #ddd;
+            --blockquote: #888;
+            --max-width: 720px;
+        }
+
+        body.night {
+            --bg: #1a1a2e;
+            --text: #d8d8e8;
+            --link: #7b9aff;
+            --toolbar-bg: rgba(26, 26, 46, 0.95);
+            --border: #333;
+            --blockquote: #aaa;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: Georgia, 'Times New Roman', serif;
+            font-size: var(--font-size);
+            line-height: var(--line-height);
+            transition: background 0.3s, color 0.3s;
+        }
+
+        /* ── Progress bar ── */
+        .progress-bar {
+            position: fixed;
+            top: 0; left: 0;
+            height: 3px;
+            width: 0;
+            background: #4361ee;
+            transition: width 0.1s;
+            z-index: 200;
+        }
+
+        /* ── Sticky toolbar ── */
+        .toolbar {
+            position: sticky;
+            top: 0;
+            background: var(--toolbar-bg);
+            backdrop-filter: blur(6px);
+            border-bottom: 1px solid var(--border);
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            z-index: 100;
+        }
+
+        .toolbar a,
+        .toolbar button {
+            padding: 6px 14px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text);
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            transition: background 0.2s, color 0.2s;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .toolbar a:hover,
+        .toolbar button:hover {
+            background: var(--link);
+            color: #fff;
+            border-color: var(--link);
+        }
+
+        .toolbar .book-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .toolbar .book-title {
+            font-weight: bold;
+            font-size: 15px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .toolbar .book-author {
+            font-size: 13px;
+            color: var(--blockquote);
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .font-controls {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .font-controls span {
+            font-size: 13px;
+            min-width: 38px;
+            text-align: center;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        /* ── Book content ── */
+        .content {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 40px 20px 100px;
+        }
+
+        .content p {
+            margin: 0 0 0.7em;
+            text-indent: 1.5em;
+        }
+
+        .content section {
+            margin-bottom: 2em;
+        }
+
+        .content h2.chapter-title {
+            font-size: 1.35em;
+            margin: 2.5em 0 1em;
+            text-align: center;
+            text-indent: 0;
+        }
+
+        .content h3.subtitle {
+            font-size: 1.15em;
+            margin: 1.5em 0 0.8em;
+            text-align: center;
+            text-indent: 0;
+        }
+
+        .content blockquote.epigraph,
+        .content blockquote.cite {
+            border-left: 3px solid var(--border);
+            margin: 1.5em 2em;
+            padding: 0.5em 1em;
+            font-style: italic;
+            color: var(--blockquote);
+        }
+
+        .content .poem {
+            margin: 1.5em 2em;
+        }
+
+        .content .stanza {
+            margin-bottom: 1em;
+        }
+
+        .content .v {
+            display: block;
+        }
+
+        .content .text-author {
+            text-align: right;
+            font-style: italic;
+            color: var(--blockquote);
+            margin-top: 0.5em;
+        }
+
+        .content code {
+            font-family: 'Courier New', monospace;
+            background: rgba(128, 128, 128, 0.12);
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+
+        .content a {
+            color: var(--link);
+        }
+
+        .content em   { font-style: italic; }
+        .content s    { text-decoration: line-through; }
+        .content sup  { font-size: 0.75em; vertical-align: super; }
+        .content sub  { font-size: 0.75em; vertical-align: sub; }
+
+        p.error {
+            color: #c0392b;
+            border: 1px solid #c0392b;
+            padding: 12px;
+            border-radius: 6px;
+        }
+
+        @media (max-width: 600px) {
+            .content { padding: 20px 14px 80px; }
+            .toolbar { padding: 8px 14px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+
+    <div class="toolbar">
+        <a href="/">← Back</a>
+        <a href="{{ download_link | e }}" title="Download FB2">⬇ Download</a>
+
+        <div class="book-info">
+            <div class="book-title">{{ book_title | e }}</div>
+            <div class="book-author">{{ book_author | e }}</div>
+        </div>
+
+        <div class="font-controls">
+            <button onclick="changeFontSize(-2)" title="Decrease font size">A−</button>
+            <span id="fontSizeLabel"></span>
+            <button onclick="changeFontSize(2)" title="Increase font size">A+</button>
+        </div>
+
+        <button onclick="toggleNight()" id="nightBtn"></button>
+    </div>
+
+    <div class="content">
+        {{ content | safe }}
+    </div>
+
+    <script>
+        let fontSize = parseInt(localStorage.getItem('readerFontSize') || '18');
+        let isNight  = localStorage.getItem('readerNight') === '1';
+
+        function applySettings() {
+            document.documentElement.style.setProperty('--font-size', fontSize + 'px');
+            document.getElementById('fontSizeLabel').textContent = fontSize + 'px';
+            document.body.classList.toggle('night', isNight);
+            document.getElementById('nightBtn').textContent = isNight ? '☀ Day' : '🌙 Night';
+        }
+
+        function changeFontSize(delta) {
+            fontSize = Math.min(32, Math.max(12, fontSize + delta));
+            localStorage.setItem('readerFontSize', fontSize);
+            applySettings();
+        }
+
+        function toggleNight() {
+            isNight = !isNight;
+            localStorage.setItem('readerNight', isNight ? '1' : '0');
+            applySettings();
+        }
+
+        window.addEventListener('scroll', () => {
+            const scrolled = window.scrollY;
+            const total = document.documentElement.scrollHeight - window.innerHeight;
+            const pct = total > 0 ? (scrolled / total) * 100 : 0;
+            document.getElementById('progressBar').style.width = pct + '%';
+        });
+
+        applySettings();
+    </script>
+</body>
+</html>
