@@ -7,6 +7,38 @@ import zipfile
 import sqlite3
 
 
+def _format_author(raw):
+    """Normalize INPX author: 'Last,First,Middle:Last2,First2:' → 'First Middle Last, First2 Last2'."""
+    if not raw:
+        return ''
+    if ':' not in raw and ',' not in raw:
+        return raw.strip()
+    authors = []
+    for part in raw.split(':'):
+        part = part.strip()
+        if not part:
+            continue
+        components = [c.strip() for c in part.split(',') if c.strip()]
+        if not components:
+            continue
+        if len(components) == 1:
+            authors.append(components[0])
+        else:
+            last = components[0]
+            rest = ' '.join(components[1:])
+            authors.append(f'{rest} {last}'.strip())
+    return ', '.join(authors) if authors else raw.strip()
+
+
+def _format_genre(raw):
+    """Normalize INPX genre: 'sf_history:sf_action:' → 'sf_history, sf_action'."""
+    if not raw:
+        return ''
+    if ':' not in raw:
+        return raw.strip()
+    return ', '.join(g.strip() for g in raw.split(':') if g.strip())
+
+
 def main():
     parser = ArgumentParser(
         description='Converter inpx to sqlite.\n\nUse format:\n\ninpx2sqlite.py <filename.inpx> <out_db_file>.db'
@@ -49,9 +81,11 @@ def main():
                     for line in TextIOWrapper(file, 'utf-8'):
                         try:
                             parts = line.strip().split('\x04')
-                            author, genre, title = parts[0], parts[1], parts[2]
-                            book_id, size, fmt   = parts[5], parts[6], parts[9]
-                            date, lang, tags     = parts[10], parts[11], parts[13]
+                            author = _format_author(parts[0])
+                            genre  = _format_genre(parts[1])
+                            title  = parts[2]
+                            book_id, size, fmt = parts[5], parts[6], parts[9]
+                            date, lang, tags   = parts[10], parts[11], parts[13]
                             rows.append((author, genre, title, book_id, size,
                                          fmt, date, lang, tags, filename))
                         except (IndexError, ValueError):

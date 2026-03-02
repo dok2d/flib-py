@@ -16,628 +16,540 @@
             --border-color: #e9ecef;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
 
-        body {
-            background-color: #f5f7fa;
-            color: var(--text-color);
-            line-height: 1.6;
-            padding: 20px;
-        }
+        body { background-color: #f5f7fa; color: var(--text-color); line-height: 1.6; padding: 20px; }
 
-        .container {
-            max-width: 1800px;
-            margin: 30px auto;
-            padding: 30px;
-            background-color: var(--background-color);
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        }
+        .container { max-width: 1800px; margin: 30px auto; padding: 30px;
+            background-color: var(--background-color); border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
 
-        header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
+        header { text-align: center; margin-bottom: 40px; }
 
-        h1 {
-            color: var(--primary-color);
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-        }
+        h1 { color: var(--primary-color); font-size: 2.5rem; margin-bottom: 10px;
+            font-weight: 700; display: flex; align-items: center;
+            justify-content: center; gap: 15px; }
 
-        .subtitle {
-            color: #6c757d;
-            font-size: 1.1rem;
-        }
-
-        .table-container {
-            overflow-x: auto;
-            border-radius: 10px;
+        /* ── Table ── */
+        .table-container { overflow-x: auto; border-radius: 10px;
             border: 1px solid var(--border-color);
-            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
-        }
+            box-shadow: 0 2px 15px rgba(0,0,0,0.05); }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 0;
-        }
+        table { width: 100%; border-collapse: collapse; }
 
-        td {
-            max-width: 200px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            position: relative;
-        }
+        td { max-width: 200px; overflow: hidden; text-overflow: ellipsis;
+            white-space: nowrap; position: relative; }
 
-        td:hover {
-            overflow: visible;
-            white-space: normal;
-            z-index: 100;
+        td:hover { overflow: visible; white-space: normal; z-index: 100;
             background-color: var(--background-color);
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
+            box-shadow: 0 0 10px rgba(0,0,0,0.1); }
 
-        th, td {
-            padding: 16px 20px;
-            text-align: left;
-            border-bottom: 1px solid var(--border-color);
-        }
+        th, td { padding: 16px 20px; text-align: left;
+            border-bottom: 1px solid var(--border-color); }
 
-        th {
-            background-color: var(--primary-color);
-            color: white;
-            position: sticky;
-            top: 0;
-            font-weight: 600;
-            cursor: pointer;
-            user-select: none;
-            transition: all 0.3s;
-            white-space: nowrap;
-        }
+        th { background-color: var(--primary-color); color: white; position: sticky;
+            top: 0; font-weight: 600; cursor: pointer; user-select: none;
+            transition: all 0.3s; white-space: nowrap; }
 
-        th:hover {
-            background-color: var(--hover-color);
-        }
+        th:hover { background-color: var(--hover-color); }
+        th.sort-asc::after  { content: " ↑"; margin-left: 6px; }
+        th.sort-desc::after { content: " ↓"; margin-left: 6px; }
 
-        th.sort-asc::after {
-            content: " ↑";
-            margin-left: 6px;
-        }
-
-        th.sort-desc::after {
-            content: " ↓";
-            margin-left: 6px;
-        }
-
-        tr:not(:last-child) {
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        tr:nth-child(even) {
-            background-color: rgba(248, 249, 250, 0.5);
-        }
-
-        tr:hover {
-            background-color: rgba(67, 97, 238, 0.08);
-        }
+        tr:nth-child(even) { background-color: rgba(248,249,250,0.5); }
+        tr:hover { background-color: rgba(67,97,238,0.08); }
 
         .id-cell, .size-cell, .date-cell {
-            text-align: center;
-            font-family: 'Courier New', Courier, monospace;
-            color: #495057;
-        }
+            text-align: center; font-family: 'Courier New', monospace; color: #495057; }
 
-        .title-cell, .author-cell {
-            max-width: 150px;
-        }
+        .title-cell, .author-cell { max-width: 150px; }
+        .tags-cell { max-width: 180px; white-space: normal; }
 
-        .tags-cell {
-            max-width: 180px;
-            white-space: normal;
-        }
+        .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tag { background-color: rgba(58,12,163,0.1); color: var(--secondary-color);
+            padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500;
+            border: 1px solid rgba(58,12,163,0.2); white-space: nowrap;
+            display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 
-        .tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-        }
+        .action-buttons { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; }
 
-        .tag {
-            background-color: rgba(58, 12, 163, 0.1);
-            color: var(--secondary-color);
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 500;
-            border: 1px solid rgba(58, 12, 163, 0.2);
-            white-space: nowrap;
-            display: inline-block;
-            max-width: 100%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
+        .download-link { display: inline-flex; align-items: center; gap: 4px;
+            color: var(--primary-color); text-decoration: none; font-weight: 500;
+            transition: all 0.2s; padding: 5px 10px; border-radius: 6px;
+            background-color: rgba(67,97,238,0.1); font-size: 13px; }
 
-        .download-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            color: var(--primary-color);
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.2s;
-            padding: 6px 12px;
-            border-radius: 6px;
-            background-color: rgba(67, 97, 238, 0.1);
-        }
+        .download-link:hover { color: white; background-color: var(--primary-color);
+            transform: translateY(-1px); }
 
-        .download-link:hover {
-            color: white;
-            background-color: var(--primary-color);
-            transform: translateY(-1px);
-        }
+        .read-link { background-color: rgba(0,160,80,0.1); }
+        .read-link:hover { background-color: #00a050; color: white; }
 
-        .read-link {
-            background-color: rgba(0, 160, 80, 0.1);
-            margin-left: 8px;
-        }
+        /* ── Bookmark star button ── */
+        .bm-star { background: none; border: none; cursor: pointer; font-size: 16px;
+            padding: 3px 5px; border-radius: 4px; color: #ccc;
+            transition: color 0.15s, transform 0.15s; line-height: 1; }
+        .bm-star:hover { color: #f0a500; transform: scale(1.25); }
+        .bm-star.saved { color: #f0a500; }
 
-        .read-link:hover {
-            background-color: #00a050;
-            color: white;
-        }
+        /* ── Search + toolbar ── */
+        .search-container { margin-bottom: 16px; display: flex; gap: 12px;
+            align-items: center; background: white; padding: 20px; border-radius: 10px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.05); flex-wrap: wrap; }
 
-        .pagination {
-            display: flex;
-            justify-content: center;
-            margin-top: 30px;
-            gap: 8px;
-            flex-wrap: wrap;
-            max-width: 100%;
-            overflow: hidden;
-        }
+        .search-input { flex: 1; min-width: 200px; padding: 12px 20px;
+            border: 1px solid var(--border-color); border-radius: 8px; font-size: 16px;
+            transition: all 0.3s; }
 
-        .page-btn {
-            padding: 10px 16px;
-            background-color: white;
-            border: 1px solid var(--border-color);
-            color: var(--text-color);
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-weight: 500;
-            margin: 2px;
-        }
+        .search-input:focus { border-color: var(--primary-color); outline: none;
+            box-shadow: 0 0 0 3px rgba(67,97,238,0.2); }
 
-        .page-btn:hover:not(.active) {
-            background-color: rgba(67, 97, 238, 0.1);
-            border-color: var(--primary-color);
-        }
+        .search-button { padding: 12px 25px; background-color: var(--primary-color);
+            color: white; border: none; border-radius: 8px; cursor: pointer;
+            font-weight: 600; transition: all 0.3s; font-size: 15px; }
 
-        .page-btn.active {
-            background-color: var(--primary-color);
-            color: white;
-            border-color: var(--primary-color);
-        }
+        .search-button:hover { background-color: var(--hover-color); transform: translateY(-2px); }
 
-        .results-count {
-            margin-bottom: 20px;
-            font-weight: 500;
-            color: var(--text-color);
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .bm-toggle-btn { padding: 12px 18px; background-color: rgba(240,165,0,0.1);
+            color: #886600; border: 1px solid rgba(240,165,0,0.4); border-radius: 8px;
+            cursor: pointer; font-weight: 600; transition: all 0.3s; font-size: 14px;
+            white-space: nowrap; }
+
+        .bm-toggle-btn:hover, .bm-toggle-btn.active {
+            background-color: #f0a500; color: #fff; border-color: #f0a500; }
+
+        /* ── Bookmarks panel ── */
+        .bookmarks-panel { display: none; background: #fffbf0;
+            border: 1px solid #f0c060; border-radius: 10px; padding: 20px;
+            margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+
+        .bookmarks-panel.visible { display: block; }
+
+        .bm-header { display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 14px; }
+
+        .bm-header strong { font-size: 16px; }
+
+        .bm-clear-btn { background: none; border: 1px solid #c44; color: #c44;
+            border-radius: 5px; padding: 4px 12px; cursor: pointer; font-size: 13px;
+            transition: background 0.2s, color 0.2s; }
+        .bm-clear-btn:hover { background: #c44; color: white; }
+
+        .bm-empty { color: #999; font-size: 14px; padding: 8px 0; }
+
+        .bm-list { display: flex; flex-direction: column; gap: 8px; }
+
+        .bm-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+            background: white; border: 1px solid var(--border-color);
+            border-radius: 8px; }
+
+        .bm-item-info { flex: 1; min-width: 0; }
+        .bm-item-title { font-weight: 500; white-space: nowrap; overflow: hidden;
+            text-overflow: ellipsis; }
+        .bm-item-author { font-size: 13px; color: #666; white-space: nowrap;
+            overflow: hidden; text-overflow: ellipsis; }
+
+        .bm-item-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+        .bm-remove-btn { background: none; border: none; cursor: pointer; color: #bbb;
+            font-size: 20px; line-height: 1; padding: 0 4px; transition: color 0.15s; }
+        .bm-remove-btn:hover { color: #c44; }
+
+        /* ── Pagination ── */
+        .pagination { display: flex; justify-content: center; margin-top: 30px;
+            gap: 6px; flex-wrap: wrap; }
+
+        .page-btn { padding: 8px 14px; background-color: white;
+            border: 1px solid var(--border-color); color: var(--text-color);
+            border-radius: 6px; cursor: pointer; transition: all 0.2s;
+            font-weight: 500; margin: 2px; }
+
+        .page-btn:hover:not(.active) { background-color: rgba(67,97,238,0.1);
+            border-color: var(--primary-color); }
+
+        .page-btn.active { background-color: var(--primary-color); color: white;
+            border-color: var(--primary-color); }
+
+        .page-ellipsis { display: inline-flex; align-items: center;
+            padding: 8px 6px; color: #999; }
+
+        .results-count { margin-bottom: 20px; font-weight: 500; color: var(--text-color);
+            display: flex; align-items: center; gap: 10px; }
+
+        .loader { display: inline-block; width: 18px; height: 18px;
+            border: 3px solid rgba(67,97,238,0.3); border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite; }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        tbody tr { animation: slideIn 0.35s cubic-bezier(0.22,1,0.36,1) forwards; opacity: 0; }
+        tbody tr:nth-child(1) { animation-delay: 0.04s; }
+        tbody tr:nth-child(2) { animation-delay: 0.08s; }
+        tbody tr:nth-child(3) { animation-delay: 0.12s; }
+        tbody tr:nth-child(4) { animation-delay: 0.16s; }
+        tbody tr:nth-child(5) { animation-delay: 0.20s; }
+        tbody tr:nth-child(6) { animation-delay: 0.24s; }
 
         @media (max-width: 768px) {
-            .container {
-                padding: 20px;
-            }
-
-            th, td {
-                padding: 12px 15px;
-                font-size: 14px;
-            }
-
-            h1 {
-                font-size: 2rem;
-            }
-        }
-
-        /* Animation for table rows */
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(16px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        tbody tr {
-            animation: slideIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-            opacity: 0;
-        }
-
-        /* Staggered animation delays */
-        tbody tr:nth-child(1) { animation-delay: 0.05s; }
-        tbody tr:nth-child(2) { animation-delay: 0.1s; }
-        tbody tr:nth-child(3) { animation-delay: 0.15s; }
-        tbody tr:nth-child(4) { animation-delay: 0.2s; }
-        tbody tr:nth-child(5) { animation-delay: 0.25s; }
-        tbody tr:nth-child(6) { animation-delay: 0.3s; }
-
-        /* Loading animation */
-        .loader {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(67, 97, 238, 0.3);
-            border-radius: 50%;
-            border-top-color: var(--primary-color);
-            animation: spin 1s ease-in-out infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .search-container {
-            margin-bottom: 30px;
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
-        }
-
-        .search-input {
-            flex: 1;
-            padding: 12px 20px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            font-size: 16px;
-            transition: all 0.3s;
-        }
-
-        .search-input:focus {
-            border-color: var(--primary-color);
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
-        }
-
-        .search-button {
-            padding: 12px 25px;
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-
-        .search-button:hover {
-            background-color: var(--hover-color);
-            transform: translateY(-2px);
+            .container { padding: 14px; }
+            th, td { padding: 10px 12px; font-size: 13px; }
+            h1 { font-size: 1.8rem; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🗎 Search documents</h1>
-        </header>
+<div class="container">
+    <header>
+        <h1>🗎 Search documents</h1>
+    </header>
 
-        <div class="search-container">
-          <input type="text" id="searchInput" class="search-input" placeholder="Search by title, author, tags..." value="{{ search_term if search_term else '' }}">
-          <button class="search-button" onclick="performSearch()">Search</button>
-      </div>
-
-      <div class="results-count">
-          <span id="docCount">Loading documents...</span>
-          <span class="loader"></span>
-      </div>
-
-        <div class="table-container">
-            <table id="resultsTable">
-                <thead>
-                    <tr>
-                      <th data-sort="title">Title</th>
-                      <th data-sort="author">Author</th>
-                      <th>Actions</th>
-                      <th data-sort="date">Upload Date</th>
-                      <th data-sort="size">File Size</th>
-                      <th data-sort="genre">Category</th>
-                      <th data-sort="language">Language</th>
-                      <th data-sort="id">ID</th>
-                      <th data-sort="tags">Tags</th>
-                    </tr>
-                </thead>
-                <tbody id="resultsBody">
-                </tbody>
-            </table>
-        </div>
-
-        <div class="pagination" id="pagination"></div>
+    <div class="search-container">
+        <input type="text" id="searchInput" class="search-input"
+               placeholder="Search by title, author, genre… combine words for exact match"
+               value="{{ search_term if search_term else '' }}">
+        <button class="search-button" onclick="performSearch()">Search</button>
+        <button id="bmToggleBtn" class="bm-toggle-btn" onclick="bmTogglePanel()">☆ Bookmarks</button>
     </div>
 
-    <script>
+    <div id="bmPanel" class="bookmarks-panel">
+        <!-- filled by JS -->
+    </div>
+
+    <div class="results-count">
+        <span id="docCount">Loading documents...</span>
+        <span class="loader"></span>
+    </div>
+
+    <div class="table-container">
+        <table id="resultsTable">
+            <thead>
+                <tr>
+                    <th data-sort="title">Title</th>
+                    <th data-sort="author">Author</th>
+                    <th>Actions</th>
+                    <th data-sort="date">Date</th>
+                    <th data-sort="size">Size</th>
+                    <th data-sort="genre">Genre</th>
+                    <th data-sort="language">Lang</th>
+                    <th data-sort="id">ID</th>
+                    <th data-sort="tags">Tags</th>
+                </tr>
+            </thead>
+            <tbody id="resultsBody"></tbody>
+        </table>
+    </div>
+
+    <div class="pagination" id="pagination"></div>
+</div>
+
+<script>
+/* ── Utilities ─────────────────────────────────────────────────────────── */
 function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = String(str == null ? '' : str);
-    return div.innerHTML;
+    const d = document.createElement('div');
+    d.textContent = String(str == null ? '' : str);
+    return d.innerHTML;
 }
 
+/* ── Bookmarks (localStorage) ──────────────────────────────────────────── */
+const BM_KEY = 'flib_bookmarks_v1';
+
+function bmLoad() {
+    try { return JSON.parse(localStorage.getItem(BM_KEY) || '[]'); }
+    catch { return []; }
+}
+function bmSave(list) { localStorage.setItem(BM_KEY, JSON.stringify(list)); }
+function bmHas(id) { return bmLoad().some(b => b.id == id); }
+
+function bmToggle(doc) {
+    const list = bmLoad();
+    const idx  = list.findIndex(b => b.id == doc.id);
+    if (idx >= 0) { list.splice(idx, 1); }
+    else { list.push({ id: doc.id, title: doc.title, author: doc.author,
+                       link: doc.link, read_link: doc.read_link || null }); }
+    bmSave(list);
+    bmRefreshPanel();
+    bmRefreshToggle();
+    return idx < 0;
+}
+
+function bmRemove(id) {
+    bmSave(bmLoad().filter(b => b.id != id));
+    bmRefreshPanel();
+    bmRefreshToggle();
+    const star = document.querySelector(`.bm-star[data-id="${id}"]`);
+    if (star) { star.textContent = '☆'; star.classList.remove('saved'); star.title = 'Bookmark'; }
+}
+
+function bmClearAll() {
+    bmSave([]);
+    bmRefreshPanel();
+    bmRefreshToggle();
+    document.querySelectorAll('.bm-star.saved').forEach(s => {
+        s.textContent = '☆'; s.classList.remove('saved'); s.title = 'Bookmark';
+    });
+}
+
+function bmRefreshToggle() {
+    const n   = bmLoad().length;
+    const btn = document.getElementById('bmToggleBtn');
+    if (!btn) return;
+    btn.textContent = n > 0 ? `⭐ Bookmarks (${n})` : '☆ Bookmarks';
+    btn.classList.toggle('active', document.getElementById('bmPanel').classList.contains('visible'));
+}
+
+function bmRefreshPanel() {
+    const panel = document.getElementById('bmPanel');
+    if (!panel.classList.contains('visible')) return;
+    const list = bmLoad();
+    if (list.length === 0) {
+        panel.innerHTML = '<p class="bm-empty">No bookmarks saved yet.</p>';
+        return;
+    }
+    let html = `<div class="bm-header"><strong>Saved books (${list.length})</strong>
+        <button class="bm-clear-btn" onclick="bmClearAll()">Clear all</button></div>
+        <div class="bm-list">`;
+    for (const b of list) {
+        const readBtn = b.read_link
+            ? `<a href="${escapeHtml(b.read_link)}" class="download-link read-link" style="padding:4px 8px;font-size:12px" title="Read online">📖</a>`
+            : '';
+        html += `
+        <div class="bm-item">
+            <div class="bm-item-info">
+                <div class="bm-item-title" title="${escapeHtml(b.title)}">${escapeHtml(b.title)}</div>
+                <div class="bm-item-author">${escapeHtml(b.author)}</div>
+            </div>
+            <div class="bm-item-actions">
+                <a href="${escapeHtml(b.link)}" class="download-link" style="padding:4px 8px;font-size:12px" title="Download">⬇</a>
+                ${readBtn}
+                <button class="bm-remove-btn" onclick="bmRemove(${Number(b.id)})" title="Remove">×</button>
+            </div>
+        </div>`;
+    }
+    html += '</div>';
+    panel.innerHTML = html;
+}
+
+function bmTogglePanel() {
+    const panel = document.getElementById('bmPanel');
+    panel.classList.toggle('visible');
+    bmRefreshPanel();
+    bmRefreshToggle();
+}
+
+/* ── Search ─────────────────────────────────────────────────────────────── */
 function performSearch() {
     const searchTerm = document.getElementById('searchInput').value.trim();
     if (!searchTerm) return;
 
     document.querySelector('.loader').style.display = 'inline-block';
-    document.getElementById('docCount').textContent = 'Searching...';
+    document.getElementById('docCount').textContent = 'Searching…';
 
     fetch('/', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'X-Requested-With': 'XMLHttpRequest'
-        },
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded',
+                   'X-Requested-With': 'XMLHttpRequest' },
         body: `search_term=${encodeURIComponent(searchTerm)}&sort_by=${currentSortField}`
     })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
+    .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
     .then(data => {
-        if (data && data.results) {
-            documents.length = 0;
-            Array.prototype.push.apply(documents, data.results);
-            currentPage = 1;
-            sortDocuments(currentSortField, currentSortDirection);
-        } else {
-            throw new Error('Invalid response format');
-        }
+        if (!data || !data.results) throw new Error('Invalid response');
+        documents.length = 0;
+        Array.prototype.push.apply(documents, data.results);
+        currentPage = 1;
+        sortDocuments(currentSortField, currentSortDirection);
     })
-    .catch(error => {
-        console.error('Search error:', error);
-        document.getElementById('docCount').textContent = 'Error: ' + error.message;
+    .catch(err => {
+        document.getElementById('docCount').textContent = 'Error: ' + err.message;
     })
-    .finally(() => {
-        document.querySelector('.loader').style.display = 'none';
-    });
+    .finally(() => { document.querySelector('.loader').style.display = 'none'; });
 }
-  </script>
 
-    <script>
-        let documents = [
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('searchInput').addEventListener('keypress', e => {
+        if (e.key === 'Enter') performSearch();
+    });
+});
+</script>
+
+<script>
+/* ── Initial data from server ───────────────────────────────────────────── */
+let documents = [
 {% for result in results %}
-    {% set download_link = "/download/" ~ result[9] ~ "/" ~ result[3]|string ~ "." ~ result[5] %}
-    {% set read_link = "/read/" ~ result[9] ~ "/" ~ result[3]|string ~ "." ~ result[5] if result[5].lower() == 'fb2' else none %}
+    {% set dl = "/download/" ~ result[9] ~ "/" ~ result[3]|string ~ "." ~ result[5] %}
+    {% set rl = "/read/" ~ result[9] ~ "/" ~ result[3]|string ~ "." ~ result[5] if result[5].lower() == 'fb2' else none %}
     {
-        id:        {{ result[3] | tojson }},
-        title:     {{ result[2] | tojson }},
-        author:    {{ result[0] | tojson }},
-        genre:     {{ result[1] | tojson }},
-        size:      {{ size_format(result[4]) | tojson }},
-        date:      {{ result[6] | tojson }},
-        language:  {{ result[7] | tojson }},
-        tags:      {{ ([result[8]] if result[8] else []) | tojson }},
-        link:      {{ download_link | tojson }},
-        read_link: {{ read_link | tojson }}
+        id:       {{ result[3] | tojson }},
+        title:    {{ result[2] | tojson }},
+        author:   {{ result[0] | tojson }},
+        genre:    {{ result[1] | tojson }},
+        size:     {{ size_format(result[4]) | tojson }},
+        date:     {{ result[6] | tojson }},
+        language: {{ result[7] | tojson }},
+        tags:     {{ ([result[8]] if result[8] else []) | tojson }},
+        link:     {{ dl | tojson }},
+        read_link:{{ rl | tojson }}
     }{% if not loop.last %},{% endif %}
 {% endfor %}
 ];
 
-        let currentSortField = 'id';
-        let currentSortDirection = 'asc';
-        let currentPage = 1;
-        const itemsPerPage = 45;
+/* ── State ── */
+let currentSortField     = 'id';
+let currentSortDirection = 'asc';
+let currentPage          = 1;
+const itemsPerPage       = 45;
+let docMap               = {};   // id → doc for current page, used by bookmark stars
 
-        function sortDocuments(field, direction) {
-            const sorted = [...documents].sort((a, b) => {
-                if (field === 'size') {
-                    const sizeA = parseFloat(a.size);
-                    const sizeB = parseFloat(b.size);
-                    return direction === 'asc' ? sizeA - sizeB : sizeB - sizeA;
-                }
-                if (field === 'date') {
-                    return direction === 'asc'
-                        ? new Date(a.date) - new Date(b.date)
-                        : new Date(b.date) - new Date(a.date);
-                }
-                if (field === 'id') {
-                    return direction === 'asc' ? a.id - b.id : b.id - a.id;
-                }
-                if (field === 'tags') {
-                    const ta = a.tags[0] || '';
-                    const tb = b.tags[0] || '';
-                    return direction === 'asc'
-                        ? ta.localeCompare(tb)
-                        : tb.localeCompare(ta);
-                }
-                return direction === 'asc'
-                    ? a[field].toString().localeCompare(b[field].toString())
-                    : b[field].toString().localeCompare(a[field].toString());
-            });
-
-            updateSortIndicators(field, direction);
-            currentSortField = field;
-            currentSortDirection = direction;
-            displayResults(sorted);
+/* ── Sort ── */
+function sortDocuments(field, direction) {
+    const sorted = [...documents].sort((a, b) => {
+        if (field === 'size') {
+            return direction === 'asc'
+                ? parseFloat(a.size) - parseFloat(b.size)
+                : parseFloat(b.size) - parseFloat(a.size);
         }
+        if (field === 'date') {
+            return direction === 'asc'
+                ? new Date(a.date) - new Date(b.date)
+                : new Date(b.date) - new Date(a.date);
+        }
+        if (field === 'id') {
+            return direction === 'asc' ? a.id - b.id : b.id - a.id;
+        }
+        if (field === 'tags') {
+            const ta = (a.tags[0] || ''), tb = (b.tags[0] || '');
+            return direction === 'asc' ? ta.localeCompare(tb) : tb.localeCompare(ta);
+        }
+        const va = String(a[field] || ''), vb = String(b[field] || '');
+        return direction === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+    });
 
-        document.getElementById('searchInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                performSearch();
-            }
+    updateSortIndicators(field, direction);
+    currentSortField     = field;
+    currentSortDirection = direction;
+    displayResults(sorted);
+}
+
+function updateSortIndicators(field, direction) {
+    document.querySelectorAll('th[data-sort]').forEach(th => {
+        th.classList.remove('sort-asc', 'sort-desc');
+    });
+    const th = document.querySelector(`th[data-sort="${field}"]`);
+    if (th) th.classList.add(direction === 'asc' ? 'sort-asc' : 'sort-desc');
+}
+
+/* ── Display ── */
+function displayResults(results) {
+    const tbody = document.getElementById('resultsBody');
+    tbody.innerHTML = '';
+
+    document.getElementById('docCount').textContent =
+        `Showing ${results.length} document${results.length !== 1 ? 's' : ''}`;
+    document.querySelector('.loader').style.display = 'none';
+
+    const totalPages = Math.ceil(results.length / itemsPerPage);
+    updatePagination(totalPages);
+
+    const start = (currentPage - 1) * itemsPerPage;
+    const page  = results.slice(start, start + itemsPerPage);
+
+    docMap = {};
+    page.forEach((doc, idx) => {
+        docMap[String(doc.id)] = doc;
+
+        const row      = document.createElement('tr');
+        row.style.animationDelay = `${idx * 0.04}s`;
+        const isSaved  = bmHas(doc.id);
+        const readBtn  = doc.read_link
+            ? `<a href="${escapeHtml(doc.read_link)}" class="download-link read-link" title="Read online">📖 Read</a>`
+            : '';
+
+        row.innerHTML = `
+            <td class="title-cell"  title="${escapeHtml(doc.title)}"><strong>${escapeHtml(doc.title)}</strong></td>
+            <td class="author-cell" title="${escapeHtml(doc.author)}">${escapeHtml(doc.author)}</td>
+            <td>
+                <div class="action-buttons">
+                    <a href="${escapeHtml(doc.link)}" class="download-link" title="Download">⬇ FB2</a>
+                    ${readBtn}
+                    <button class="bm-star ${isSaved ? 'saved' : ''}" data-id="${escapeHtml(String(doc.id))}"
+                            title="${isSaved ? 'Remove bookmark' : 'Bookmark'}">
+                        ${isSaved ? '⭐' : '☆'}</button>
+                </div>
+            </td>
+            <td class="date-cell">${escapeHtml(doc.date)}</td>
+            <td class="size-cell">${escapeHtml(doc.size)}</td>
+            <td>${escapeHtml(doc.genre)}</td>
+            <td>${escapeHtml(doc.language)}</td>
+            <td class="id-cell">${escapeHtml(doc.id)}</td>
+            <td class="tags-cell">
+                <div class="tags">
+                    ${doc.tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}
+                </div>
+            </td>`;
+
+        row.querySelector('.bm-star').addEventListener('click', function () {
+            const d     = docMap[this.dataset.id];
+            if (!d) return;
+            const added = bmToggle(d);
+            this.textContent = added ? '⭐' : '☆';
+            this.classList.toggle('saved', added);
+            this.title = added ? 'Remove bookmark' : 'Bookmark';
         });
 
-        function updateSortIndicators(field, direction) {
-            document.querySelectorAll('th[data-sort]').forEach(th => {
-                th.classList.remove('sort-asc', 'sort-desc');
-            });
-            const currentTh = document.querySelector(`th[data-sort="${field}"]`);
-            if (currentTh) {
-                currentTh.classList.add(direction === 'asc' ? 'sort-asc' : 'sort-desc');
-            }
-        }
+        tbody.appendChild(row);
+    });
+}
 
-        function displayResults(results) {
-            const tbody = document.getElementById('resultsBody');
-            tbody.innerHTML = '';
+/* ── Pagination ── */
+function updatePagination(totalPages) {
+    const pg = document.getElementById('pagination');
+    pg.innerHTML = '';
 
-            document.getElementById('docCount').textContent = `Showing ${results.length} documents`;
-            document.querySelector('.loader').style.display = 'none';
+    const max = 10;
+    let s = Math.max(1, currentPage - Math.floor(max / 2));
+    let e = Math.min(totalPages, s + max - 1);
+    if (e - s + 1 < max) s = Math.max(1, e - max + 1);
 
-            const totalPages = Math.ceil(results.length / itemsPerPage);
-            updatePagination(totalPages);
+    function btn(label, page, disabled) {
+        const b = document.createElement('button');
+        b.className = `page-btn${page === currentPage ? ' active' : ''}`;
+        b.textContent = label;
+        b.disabled = disabled || false;
+        b.onclick = () => { currentPage = page; sortDocuments(currentSortField, currentSortDirection); };
+        return b;
+    }
+    function ellipsis() {
+        const sp = document.createElement('span');
+        sp.className = 'page-ellipsis'; sp.textContent = '…'; return sp;
+    }
 
-            const startIndex = (currentPage - 1) * itemsPerPage;
-            const paginatedItems = results.slice(startIndex, startIndex + itemsPerPage);
+    pg.appendChild(btn('‹', currentPage - 1, currentPage === 1));
+    if (s > 1) { pg.appendChild(btn('1', 1)); if (s > 2) pg.appendChild(ellipsis()); }
+    for (let i = s; i <= e; i++) pg.appendChild(btn(i, i));
+    if (e < totalPages) { if (e < totalPages - 1) pg.appendChild(ellipsis()); pg.appendChild(btn(totalPages, totalPages)); }
+    pg.appendChild(btn('›', currentPage + 1, currentPage === totalPages));
+}
 
-            paginatedItems.forEach((doc, index) => {
-                const row = document.createElement('tr');
-                row.style.animationDelay = `${index * 0.05}s`;
+/* ── Column sort click ── */
+function setupSorting() {
+    document.querySelectorAll('th[data-sort]').forEach(th => {
+        th.addEventListener('click', () => {
+            const field = th.getAttribute('data-sort');
+            const dir   = (currentSortField === field && currentSortDirection === 'asc') ? 'desc' : 'asc';
+            currentPage = 1;
+            sortDocuments(field, dir);
+        });
+    });
+}
 
-                const readBtn = doc.read_link
-                    ? `<a href="${escapeHtml(doc.read_link)}" class="download-link read-link" title="Read online">📖 Read</a>`
-                    : '';
-
-                row.innerHTML = `
-                <td class="title-cell" title="${escapeHtml(doc.title)}"><strong>${escapeHtml(doc.title)}</strong></td>
-                <td class="author-cell" title="${escapeHtml(doc.author)}">${escapeHtml(doc.author)}</td>
-                <td class="actions-cell">
-                    <div class="action-buttons">
-                        <a href="${escapeHtml(doc.link)}" class="download-link" title="Download">⬇ FB2</a>
-                        ${readBtn}
-                    </div>
-                </td>
-                <td class="date-cell">${escapeHtml(doc.date)}</td>
-                <td class="size-cell">${escapeHtml(doc.size)}</td>
-                <td>${escapeHtml(doc.genre)}</td>
-                <td>${escapeHtml(doc.language)}</td>
-                <td class="id-cell">${escapeHtml(doc.id)}</td>
-                <td class="tags-cell">
-                  <div class="tags">
-                    ${doc.tags.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
-                  </div>
-                </td>
-                `;
-
-                tbody.appendChild(row);
-            });
-        }
-
-        function updatePagination(totalPages) {
-            const pagination = document.getElementById('pagination');
-            pagination.innerHTML = '';
-
-            const maxVisiblePages = 10;
-            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-            let endPage   = Math.min(totalPages, startPage + maxVisiblePages - 1);
-            if (endPage - startPage + 1 < maxVisiblePages) {
-                startPage = Math.max(1, endPage - maxVisiblePages + 1);
-            }
-
-            const prevBtn = document.createElement('button');
-            prevBtn.className = 'page-btn';
-            prevBtn.textContent = '‹';
-            prevBtn.onclick = previousPage;
-            prevBtn.disabled = currentPage === 1;
-            pagination.appendChild(prevBtn);
-
-            if (startPage > 1) {
-                const firstBtn = document.createElement('button');
-                firstBtn.className = 'page-btn';
-                firstBtn.textContent = '1';
-                firstBtn.onclick = () => { currentPage = 1; sortDocuments(currentSortField, currentSortDirection); };
-                pagination.appendChild(firstBtn);
-                if (startPage > 2) {
-                    const ellipsis = document.createElement('span');
-                    ellipsis.className = 'page-ellipsis';
-                    ellipsis.textContent = '...';
-                    pagination.appendChild(ellipsis);
-                }
-            }
-
-            for (let i = startPage; i <= endPage; i++) {
-                const pageBtn = document.createElement('button');
-                pageBtn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
-                pageBtn.textContent = i;
-                pageBtn.onclick = () => { currentPage = i; sortDocuments(currentSortField, currentSortDirection); };
-                pagination.appendChild(pageBtn);
-            }
-
-            if (endPage < totalPages) {
-                if (endPage < totalPages - 1) {
-                    const ellipsis = document.createElement('span');
-                    ellipsis.className = 'page-ellipsis';
-                    ellipsis.textContent = '...';
-                    pagination.appendChild(ellipsis);
-                }
-                const lastBtn = document.createElement('button');
-                lastBtn.className = 'page-btn';
-                lastBtn.textContent = totalPages;
-                lastBtn.onclick = () => { currentPage = totalPages; sortDocuments(currentSortField, currentSortDirection); };
-                pagination.appendChild(lastBtn);
-            }
-
-            const nextBtn = document.createElement('button');
-            nextBtn.className = 'page-btn';
-            nextBtn.textContent = '›';
-            nextBtn.onclick = nextPage;
-            nextBtn.disabled = currentPage === totalPages;
-            pagination.appendChild(nextBtn);
-        }
-
-        function nextPage() {
-            const totalPages = Math.ceil(documents.length / itemsPerPage);
-            if (currentPage < totalPages) {
-                currentPage++;
-                sortDocuments(currentSortField, currentSortDirection);
-            }
-        }
-
-        function previousPage() {
-            if (currentPage > 1) {
-                currentPage--;
-                sortDocuments(currentSortField, currentSortDirection);
-            }
-        }
-
-        function setupSorting() {
-            document.querySelectorAll('th[data-sort]').forEach(th => {
-                th.addEventListener('click', () => {
-                    const field = th.getAttribute('data-sort');
-                    const direction = (currentSortField === field && currentSortDirection === 'asc')
-                        ? 'desc' : 'asc';
-                    currentPage = 1;
-                    sortDocuments(field, direction);
-                });
-            });
-        }
-
-        window.onload = function() {
-            setupSorting();
-            sortDocuments(currentSortField, currentSortDirection);
-        };
-    </script>
+window.onload = function () {
+    setupSorting();
+    bmRefreshToggle();
+    sortDocuments(currentSortField, currentSortDirection);
+};
+</script>
 </body>
 </html>
