@@ -84,6 +84,13 @@
         .read-link { background-color: rgba(0,160,80,0.1); }
         .read-link:hover { background-color: #00a050; color: white; }
 
+        .txt-link  { background-color: rgba(100,160,80,0.1); }
+        .txt-link:hover  { background-color: #64a050; color: white; }
+        .epub-link { background-color: rgba(180,100,0,0.1); }
+        .epub-link:hover { background-color: #b46400; color: white; }
+        .pdf-link  { background-color: rgba(180,40,40,0.1); }
+        .pdf-link:hover  { background-color: #b42828; color: white; }
+
         /* ── Bookmark star button ── */
         .bm-star { background: none; border: none; cursor: pointer; font-size: 16px;
             padding: 3px 5px; border-radius: 4px; color: #ccc;
@@ -269,7 +276,8 @@ function bmToggle(doc) {
     const idx  = list.findIndex(b => b.id == doc.id);
     if (idx >= 0) { list.splice(idx, 1); }
     else { list.push({ id: doc.id, title: doc.title, author: doc.author,
-                       link: doc.link, read_link: doc.read_link || null }); }
+                       link: doc.link, read_link: doc.read_link || null,
+                       convert_base: doc.convert_base || null }); }
     bmSave(list);
     bmRefreshPanel();
     bmRefreshToggle();
@@ -380,18 +388,20 @@ document.addEventListener('DOMContentLoaded', () => {
 let documents = [
 {% for result in results %}
     {% set dl = "/download/" ~ result[9] ~ "/" ~ result[3]|string ~ "." ~ result[5] %}
-    {% set rl = "/read/" ~ result[9] ~ "/" ~ result[3]|string ~ "." ~ result[5] if result[5].lower() == 'fb2' else none %}
+    {% set rl = "/read/"     ~ result[9] ~ "/" ~ result[3]|string ~ "." ~ result[5] if result[5].lower() == 'fb2' else none %}
+    {% set cb = "/convert/"  ~ result[9] ~ "/" ~ result[3]|string ~ "." ~ result[5] if result[5].lower() == 'fb2' else none %}
     {
-        id:       {{ result[3] | tojson }},
-        title:    {{ result[2] | tojson }},
-        author:   {{ result[0] | tojson }},
-        genre:    {{ result[1] | tojson }},
-        size:     {{ size_format(result[4]) | tojson }},
-        date:     {{ result[6] | tojson }},
-        language: {{ result[7] | tojson }},
-        tags:     {{ ([result[8]] if result[8] else []) | tojson }},
-        link:     {{ dl | tojson }},
-        read_link:{{ rl | tojson }}
+        id:           {{ result[3] | tojson }},
+        title:        {{ result[2] | tojson }},
+        author:       {{ result[0] | tojson }},
+        genre:        {{ result[1] | tojson }},
+        size:         {{ size_format(result[4]) | tojson }},
+        date:         {{ result[6] | tojson }},
+        language:     {{ result[7] | tojson }},
+        tags:         {{ ([result[8]] if result[8] else []) | tojson }},
+        link:         {{ dl | tojson }},
+        read_link:    {{ rl | tojson }},
+        convert_base: {{ cb | tojson }}
     }{% if not loop.last %},{% endif %}
 {% endfor %}
 ];
@@ -466,6 +476,11 @@ function displayResults(results) {
         const readBtn  = doc.read_link
             ? `<a href="${escapeHtml(doc.read_link)}" class="download-link read-link" title="Read online">📖 Read</a>`
             : '';
+        const convertBtns = doc.convert_base
+            ? `<a href="${escapeHtml(doc.convert_base)}/to/txt"  class="download-link txt-link"  title="Download TXT">⬇ TXT</a>` +
+              `<a href="${escapeHtml(doc.convert_base)}/to/epub" class="download-link epub-link" title="Download EPUB">⬇ EPUB</a>` +
+              `<a href="${escapeHtml(doc.convert_base)}/to/pdf"  class="download-link pdf-link"  title="Download PDF">⬇ PDF</a>`
+            : '';
 
         row.innerHTML = `
             <td class="title-cell"  title="${escapeHtml(doc.title)}"><strong>${escapeHtml(doc.title)}</strong></td>
@@ -474,6 +489,7 @@ function displayResults(results) {
                 <div class="action-buttons">
                     <a href="${escapeHtml(doc.link)}" class="download-link" title="Download">⬇ FB2</a>
                     ${readBtn}
+                    ${convertBtns}
                     <button class="bm-star ${isSaved ? 'saved' : ''}" data-id="${escapeHtml(String(doc.id))}"
                             title="${isSaved ? 'Remove bookmark' : 'Bookmark'}">
                         ${isSaved ? '⭐' : '☆'}</button>

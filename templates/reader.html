@@ -13,7 +13,7 @@
             --link: #4361ee;
             --toolbar-bg: rgba(253, 246, 227, 0.95);
             --border: #ddd;
-            --blockquote: #888;
+            --dim: #888;
             --max-width: 720px;
         }
 
@@ -23,7 +23,7 @@
             --link: #7b9aff;
             --toolbar-bg: rgba(26, 26, 46, 0.95);
             --border: #333;
-            --blockquote: #aaa;
+            --dim: #aaa;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -37,111 +37,391 @@
             transition: background 0.3s, color 0.3s;
         }
 
-        /* ── Progress bar ── */
-        .progress-bar {
+        /* ── Progress track ─────────────────────────────────────────── */
+        .progress-track {
             position: fixed;
-            top: 0; left: 0;
-            height: 3px;
-            width: 0;
-            background: #4361ee;
-            transition: width 0.1s;
-            z-index: 200;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            background: rgba(128,128,128,0.2);
+            z-index: 300;
+            cursor: crosshair;
         }
 
-        /* ── Sticky toolbar ── */
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--link);
+            pointer-events: none;
+            transition: width 0.1s;
+        }
+
+        .bm-dot {
+            position: absolute;
+            top: 0;
+            height: 4px;
+            width: 10px;
+            background: #e74c3c;
+            transform: translateX(-50%);
+            cursor: pointer;
+            border-radius: 0 0 3px 3px;
+            z-index: 1;
+        }
+
+        .bm-dot::after {
+            content: attr(data-label);
+            display: none;
+            position: absolute;
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #222;
+            color: #fff;
+            font-size: 11px;
+            font-family: 'Segoe UI', sans-serif;
+            padding: 3px 8px;
+            border-radius: 4px;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        .bm-dot:hover::after { display: block; }
+
+        /* ── Toolbar ────────────────────────────────────────────────── */
         .toolbar {
             position: sticky;
             top: 0;
             background: var(--toolbar-bg);
             backdrop-filter: blur(6px);
             border-bottom: 1px solid var(--border);
-            padding: 10px 20px;
+            padding: 8px 16px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 6px;
             flex-wrap: wrap;
-            z-index: 100;
+            z-index: 200;
         }
 
         .toolbar a,
         .toolbar button {
-            padding: 6px 14px;
+            padding: 5px 12px;
             border-radius: 6px;
             border: 1px solid var(--border);
             background: transparent;
             color: var(--text);
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
             text-decoration: none;
-            transition: background 0.2s, color 0.2s;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
             font-family: 'Segoe UI', sans-serif;
+            white-space: nowrap;
         }
 
         .toolbar a:hover,
-        .toolbar button:hover {
+        .toolbar button:hover,
+        .toolbar button.active {
             background: var(--link);
             color: #fff;
             border-color: var(--link);
         }
 
-        .toolbar .book-info {
+        .book-info {
             flex: 1;
             min-width: 0;
         }
 
-        .toolbar .book-title {
+        .book-title {
             font-weight: bold;
-            font-size: 15px;
+            font-size: 14px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             font-family: 'Segoe UI', sans-serif;
         }
 
-        .toolbar .book-author {
-            font-size: 13px;
-            color: var(--blockquote);
+        .book-author {
+            font-size: 12px;
+            color: var(--dim);
             font-family: 'Segoe UI', sans-serif;
         }
 
         .font-controls {
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 3px;
         }
 
         .font-controls span {
-            font-size: 13px;
-            min-width: 38px;
+            font-size: 12px;
+            min-width: 36px;
             text-align: center;
             font-family: 'Segoe UI', sans-serif;
         }
 
-        /* ── Book content ── */
+        /* ── TOC sidebar ────────────────────────────────────────────── */
+        .toc-sidebar {
+            position: fixed;
+            top: 0; left: 0;
+            width: 280px;
+            height: 100vh;
+            background: var(--toolbar-bg);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            z-index: 500;
+            transform: translateX(-280px);
+            transition: transform 0.3s ease;
+            padding: 52px 0 20px;
+        }
+
+        .toc-sidebar.open { transform: translateX(0); }
+
+        .toc-sidebar h3 {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 0 16px 10px;
+            color: var(--dim);
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+        }
+
+        .toc-sidebar ul { list-style: none; }
+
+        .toc-link {
+            display: block;
+            padding: 6px 16px;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 13px;
+            color: var(--text);
+            text-decoration: none;
+            border-left: 3px solid transparent;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            transition: background 0.15s, border-color 0.15s;
+        }
+
+        .toc-link:hover,
+        .toc-link.active {
+            background: rgba(67, 97, 238, 0.1);
+            border-left-color: var(--link);
+            color: var(--link);
+        }
+
+        .toc-l2 .toc-link { padding-left: 28px; font-size: 12px; }
+        .toc-l3 .toc-link { padding-left: 40px; font-size: 12px; color: var(--dim); }
+
+        .toc-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.35);
+            z-index: 490;
+        }
+
+        .toc-overlay.vis { display: block; }
+
+        /* ── Bookmark panel ─────────────────────────────────────────── */
+        .bm-panel {
+            position: fixed;
+            top: 0; right: 0;
+            width: 300px;
+            height: 100vh;
+            background: var(--toolbar-bg);
+            border-left: 1px solid var(--border);
+            overflow-y: auto;
+            z-index: 500;
+            transform: translateX(300px);
+            transition: transform 0.3s ease;
+            padding: 52px 0 20px;
+        }
+
+        .bm-panel.open { transform: translateX(0); }
+
+        .bm-panel h3 {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 0 16px 10px;
+            color: var(--dim);
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+        }
+
+        .bm-add-here {
+            display: block;
+            width: calc(100% - 24px);
+            margin: 0 12px 12px;
+            padding: 8px 12px;
+            border: 1px dashed var(--border);
+            border-radius: 6px;
+            text-align: center;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 13px;
+            color: var(--dim);
+            cursor: pointer;
+            background: transparent;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+        }
+
+        .bm-add-here:hover {
+            background: rgba(67, 97, 238, 0.08);
+            color: var(--link);
+            border-color: var(--link);
+        }
+
+        .bm-list { list-style: none; padding: 0 12px; }
+
+        .bm-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            margin-bottom: 8px;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 13px;
+            transition: background 0.15s;
+        }
+
+        .bm-pct {
+            font-size: 11px;
+            background: var(--link);
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .bm-label {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        .bm-del {
+            color: #c0392b;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 16px;
+            line-height: 1;
+            flex-shrink: 0;
+            transition: background 0.15s;
+        }
+
+        .bm-del:hover { background: rgba(192, 57, 43, 0.15); }
+
+        .bm-empty {
+            padding: 16px;
+            color: var(--dim);
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        /* ── Bookmark popup ─────────────────────────────────────────── */
+        .bm-popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            z-index: 600;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+            width: 300px;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .bm-popup.show { display: block; }
+
+        .bm-popup h4 {
+            margin-bottom: 12px;
+            font-size: 15px;
+            color: var(--text);
+        }
+
+        .bm-popup input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 14px;
+            background: var(--bg);
+            color: var(--text);
+            margin-bottom: 12px;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .bm-popup-btns {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .bm-popup-btns button {
+            padding: 7px 16px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            font-size: 13px;
+            font-family: 'Segoe UI', sans-serif;
+            background: transparent;
+            color: var(--text);
+            transition: background 0.15s;
+        }
+
+        .bm-popup-btns .btn-save {
+            background: var(--link);
+            color: #fff;
+            border-color: var(--link);
+        }
+
+        .popup-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.3);
+            z-index: 590;
+        }
+
+        .popup-overlay.show { display: block; }
+
+        /* ── Content ────────────────────────────────────────────────── */
+        .content-wrap { transition: margin-left 0.3s ease; }
+
         .content {
             max-width: var(--max-width);
             margin: 0 auto;
             padding: 40px 20px 100px;
         }
 
-        .content p {
-            margin: 0 0 0.7em;
-            text-indent: 1.5em;
-        }
+        .content p { margin: 0 0 0.7em; text-indent: 1.5em; }
 
-        .content section {
-            margin-bottom: 2em;
-        }
+        .content section { margin-bottom: 2em; }
 
-        .content h2.chapter-title {
-            font-size: 1.35em;
-            margin: 2.5em 0 1em;
+        .content h2.ch-title,
+        .content h3.ch-title,
+        .content h4.ch-title {
             text-align: center;
             text-indent: 0;
+            margin: 2.5em 0 1em;
         }
 
+        .content h2.ch-title { font-size: 1.35em; }
+        .content h3.ch-title { font-size: 1.2em; }
+        .content h4.ch-title { font-size: 1.05em; }
+
         .content h3.subtitle {
-            font-size: 1.15em;
+            font-size: 1.1em;
             margin: 1.5em 0 0.8em;
             text-align: center;
             text-indent: 0;
@@ -153,44 +433,44 @@
             margin: 1.5em 2em;
             padding: 0.5em 1em;
             font-style: italic;
-            color: var(--blockquote);
+            color: var(--dim);
         }
 
-        .content .poem {
-            margin: 1.5em 2em;
-        }
-
-        .content .stanza {
-            margin-bottom: 1em;
-        }
-
-        .content .v {
-            display: block;
-        }
+        .content .poem { margin: 1.5em 2em; }
+        .content .stanza { margin-bottom: 1em; }
+        .content .v { display: block; }
 
         .content .text-author {
             text-align: right;
             font-style: italic;
-            color: var(--blockquote);
+            color: var(--dim);
             margin-top: 0.5em;
         }
 
         .content code {
             font-family: 'Courier New', monospace;
-            background: rgba(128, 128, 128, 0.12);
+            background: rgba(128,128,128,0.12);
             padding: 2px 5px;
             border-radius: 3px;
             font-size: 0.9em;
         }
 
-        .content a {
-            color: var(--link);
+        .content a { color: var(--link); }
+        .content em { font-style: italic; }
+        .content s  { text-decoration: line-through; }
+        .content sup { font-size: 0.75em; vertical-align: super; }
+        .content sub { font-size: 0.75em; vertical-align: sub; }
+
+        .content figure.book-img {
+            text-align: center;
+            margin: 1.5em 0;
         }
 
-        .content em   { font-style: italic; }
-        .content s    { text-decoration: line-through; }
-        .content sup  { font-size: 0.75em; vertical-align: super; }
-        .content sub  { font-size: 0.75em; vertical-align: sub; }
+        .content figure.book-img img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
 
         p.error {
             color: #c0392b;
@@ -199,18 +479,52 @@
             border-radius: 6px;
         }
 
+        /* ── Print ──────────────────────────────────────────────────── */
+        @media print {
+            .progress-track,
+            .toolbar,
+            .toc-sidebar,
+            .toc-overlay,
+            .bm-panel,
+            .bm-popup,
+            .popup-overlay { display: none !important; }
+
+            .content-wrap { margin: 0 !important; }
+            .content { padding: 0; max-width: 100%; }
+            body { font-size: 11pt; line-height: 1.6; }
+        }
+
         @media (max-width: 600px) {
             .content { padding: 20px 14px 80px; }
-            .toolbar { padding: 8px 14px; }
+            .toolbar { padding: 6px 10px; gap: 4px; }
+            .toc-sidebar { width: 85vw; }
         }
     </style>
 </head>
 <body>
-    <div class="progress-bar" id="progressBar"></div>
+    <!-- Progress track (seek bar + bookmark dots) -->
+    <div class="progress-track" id="progressTrack">
+        <div class="progress-fill" id="progressFill"></div>
+    </div>
 
+    <!-- TOC overlay (mobile tap-to-close) -->
+    <div class="toc-overlay" id="tocOverlay" onclick="closeToc()"></div>
+
+    <!-- TOC sidebar -->
+    <aside class="toc-sidebar" id="tocSidebar">
+        <h3>Contents</h3>
+        <ul id="tocList"></ul>
+    </aside>
+
+    <!-- Toolbar -->
     <div class="toolbar">
         <a href="/">← Back</a>
-        <a href="{{ download_link | e }}" title="Download FB2">⬇ Download</a>
+        <a href="{{ download_link | e }}" title="Download FB2">⬇ FB2</a>
+        {% if convert_base %}
+        <a href="{{ convert_base | e }}/to/txt" title="Download TXT">⬇ TXT</a>
+        <a href="{{ convert_base | e }}/to/epub" title="Download EPUB">⬇ EPUB</a>
+        <a href="{{ convert_base | e }}/to/pdf" title="Download PDF">⬇ PDF</a>
+        {% endif %}
 
         <div class="book-info">
             <div class="book-title">{{ book_title | e }}</div>
@@ -219,48 +533,272 @@
 
         <div class="font-controls">
             <button onclick="changeFontSize(-2)" title="Decrease font size">A−</button>
-            <span id="fontSizeLabel"></span>
+            <span id="fsLabel"></span>
             <button onclick="changeFontSize(2)" title="Increase font size">A+</button>
         </div>
 
         <button onclick="toggleNight()" id="nightBtn"></button>
+        {% if toc %}
+        <button onclick="toggleToc()" id="tocBtn" title="Table of contents">☰ TOC</button>
+        {% endif %}
+        <button onclick="toggleBmPanel()" id="bmBtn" title="Bookmarks">🔖</button>
+        <button onclick="window.print()" title="Print / Save as PDF">🖨</button>
     </div>
 
-    <div class="content">
-        {{ content | safe }}
+    <!-- Content -->
+    <div class="content-wrap" id="contentWrap">
+        <div class="content">
+            {{ content | safe }}
+        </div>
+    </div>
+
+    <!-- Bookmark panel -->
+    <aside class="bm-panel" id="bmPanel">
+        <h3>Bookmarks</h3>
+        <button class="bm-add-here" onclick="addBmHere()">+ Add bookmark here</button>
+        <ul class="bm-list" id="bmList"></ul>
+    </aside>
+
+    <!-- Bookmark popup (label input) -->
+    <div class="popup-overlay" id="popupOverlay" onclick="cancelBm()"></div>
+    <div class="bm-popup" id="bmPopup">
+        <h4>Add Bookmark</h4>
+        <input type="text" id="bmLabel" placeholder="Label (optional)" maxlength="80">
+        <div class="bm-popup-btns">
+            <button onclick="cancelBm()">Cancel</button>
+            <button class="btn-save" onclick="confirmBm()">Save</button>
+        </div>
     </div>
 
     <script>
-        let fontSize = parseInt(localStorage.getItem('readerFontSize') || '18');
-        let isNight  = localStorage.getItem('readerNight') === '1';
+    // ── Utilities ──────────────────────────────────────────────────────────
+    function escHtml(s) {
+        const d = document.createElement('div');
+        d.textContent = s == null ? '' : String(s);
+        return d.innerHTML;
+    }
 
-        function applySettings() {
-            document.documentElement.style.setProperty('--font-size', fontSize + 'px');
-            document.getElementById('fontSizeLabel').textContent = fontSize + 'px';
-            document.body.classList.toggle('night', isNight);
-            document.getElementById('nightBtn').textContent = isNight ? '☀ Day' : '🌙 Night';
+    function getScrollPct() {
+        const total = document.documentElement.scrollHeight - window.innerHeight;
+        return total > 0 ? Math.round(window.scrollY / total * 1000) / 10 : 0;
+    }
+
+    // ── Settings ───────────────────────────────────────────────────────────
+    let fontSize = parseInt(localStorage.getItem('readerFontSize') || '18');
+    let isNight  = localStorage.getItem('readerNight') === '1';
+
+    function applySettings() {
+        document.documentElement.style.setProperty('--font-size', fontSize + 'px');
+        document.getElementById('fsLabel').textContent = fontSize + 'px';
+        document.body.classList.toggle('night', isNight);
+        document.getElementById('nightBtn').textContent = isNight ? '☀ Day' : '🌙 Night';
+    }
+
+    function changeFontSize(d) {
+        fontSize = Math.min(32, Math.max(12, fontSize + d));
+        localStorage.setItem('readerFontSize', fontSize);
+        applySettings();
+    }
+
+    function toggleNight() {
+        isNight = !isNight;
+        localStorage.setItem('readerNight', isNight ? '1' : '0');
+        applySettings();
+    }
+
+    // ── Progress ───────────────────────────────────────────────────────────
+    window.addEventListener('scroll', () => {
+        document.getElementById('progressFill').style.width = getScrollPct() + '%';
+        updateTocHighlight();
+    }, { passive: true });
+
+    // Click on progress track to seek (unless clicking a dot)
+    document.getElementById('progressTrack').addEventListener('click', (e) => {
+        if (e.target.classList.contains('bm-dot')) return;
+        const pct = e.clientX / window.innerWidth * 100;
+        const total = document.documentElement.scrollHeight - window.innerHeight;
+        window.scrollTo({ top: pct / 100 * total, behavior: 'instant' });
+    });
+
+    // ── TOC ────────────────────────────────────────────────────────────────
+    const tocData = {{ toc | tojson }};
+    const bookId  = {{ book_id | tojson }};
+
+    (function buildToc() {
+        const ul = document.getElementById('tocList');
+        if (!ul || !tocData.length) return;
+        tocData.forEach(e => {
+            const li = document.createElement('li');
+            const lvl = Math.min(e.level, 3);
+            if (lvl >= 2) li.className = 'toc-l' + lvl;
+            const a = document.createElement('a');
+            a.className = 'toc-link';
+            a.href = '#' + e.id;
+            a.textContent = e.title;
+            a.addEventListener('click', ev => {
+                ev.preventDefault();
+                const el = document.getElementById(e.id);
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                if (window.innerWidth < 768) closeToc();
+            });
+            li.appendChild(a);
+            ul.appendChild(li);
+        });
+    })();
+
+    function updateTocHighlight() {
+        if (!tocData.length) return;
+        const mid = window.scrollY + window.innerHeight * 0.35;
+        let activeId = null;
+        for (const e of tocData) {
+            const el = document.getElementById(e.id);
+            if (el && el.getBoundingClientRect().top + window.scrollY <= mid) {
+                activeId = e.id;
+            }
         }
+        document.querySelectorAll('.toc-link').forEach(a => {
+            a.classList.toggle('active', a.getAttribute('href') === '#' + activeId);
+        });
+    }
 
-        function changeFontSize(delta) {
-            fontSize = Math.min(32, Math.max(12, fontSize + delta));
-            localStorage.setItem('readerFontSize', fontSize);
-            applySettings();
+    let tocOpen = false;
+
+    function toggleToc() {
+        tocOpen = !tocOpen;
+        document.getElementById('tocSidebar').classList.toggle('open', tocOpen);
+        document.getElementById('tocOverlay').classList.toggle('vis', tocOpen);
+        const btn = document.getElementById('tocBtn');
+        if (btn) btn.classList.toggle('active', tocOpen);
+        if (window.innerWidth >= 768) {
+            document.getElementById('contentWrap').style.marginLeft = tocOpen ? '280px' : '';
         }
+    }
 
-        function toggleNight() {
-            isNight = !isNight;
-            localStorage.setItem('readerNight', isNight ? '1' : '0');
-            applySettings();
-        }
+    function closeToc() {
+        tocOpen = false;
+        document.getElementById('tocSidebar').classList.remove('open');
+        document.getElementById('tocOverlay').classList.remove('vis');
+        const btn = document.getElementById('tocBtn');
+        if (btn) btn.classList.remove('active');
+        document.getElementById('contentWrap').style.marginLeft = '';
+    }
 
-        window.addEventListener('scroll', () => {
-            const scrolled = window.scrollY;
-            const total = document.documentElement.scrollHeight - window.innerHeight;
-            const pct = total > 0 ? (scrolled / total) * 100 : 0;
-            document.getElementById('progressBar').style.width = pct + '%';
+    // ── Bookmarks ──────────────────────────────────────────────────────────
+    const BM_KEY = 'rdr_bm_' + bookId;
+
+    function loadBmList() {
+        try { return JSON.parse(localStorage.getItem(BM_KEY) || '[]'); }
+        catch { return []; }
+    }
+
+    function saveBmData(list) {
+        localStorage.setItem(BM_KEY, JSON.stringify(list));
+    }
+
+    let pendingPct = null;
+
+    function addBmHere() {
+        showBmPopup(getScrollPct());
+    }
+
+    function showBmPopup(pct) {
+        pendingPct = pct;
+        document.getElementById('bmLabel').value = '';
+        document.getElementById('bmPopup').classList.add('show');
+        document.getElementById('popupOverlay').classList.add('show');
+        setTimeout(() => document.getElementById('bmLabel').focus(), 60);
+    }
+
+    function confirmBm() {
+        if (pendingPct === null) return;
+        const label = document.getElementById('bmLabel').value.trim() || (pendingPct + '%');
+        const list = loadBmList();
+        list.push({ pct: pendingPct, label, ts: Date.now() });
+        list.sort((a, b) => a.pct - b.pct);
+        saveBmData(list);
+        cancelBm();
+        renderBm();
+    }
+
+    function cancelBm() {
+        pendingPct = null;
+        document.getElementById('bmPopup').classList.remove('show');
+        document.getElementById('popupOverlay').classList.remove('show');
+    }
+
+    document.getElementById('bmLabel').addEventListener('keydown', e => {
+        if (e.key === 'Enter')  confirmBm();
+        if (e.key === 'Escape') cancelBm();
+    });
+
+    function deleteBm(idx) {
+        const list = loadBmList();
+        list.splice(idx, 1);
+        saveBmData(list);
+        renderBm();
+    }
+
+    function scrollToBm(pct) {
+        const total = document.documentElement.scrollHeight - window.innerHeight;
+        window.scrollTo({ top: pct / 100 * total, behavior: 'smooth' });
+    }
+
+    function renderBm() {
+        const list = loadBmList();
+
+        // Dots on progress track
+        document.querySelectorAll('.bm-dot').forEach(d => d.remove());
+        const track = document.getElementById('progressTrack');
+        list.forEach(bm => {
+            const dot = document.createElement('div');
+            dot.className = 'bm-dot';
+            dot.style.left = bm.pct + '%';
+            dot.setAttribute('data-label', bm.label);
+            dot.title = bm.label;
+            dot.addEventListener('click', ev => {
+                ev.stopPropagation();
+                scrollToBm(bm.pct);
+            });
+            track.appendChild(dot);
         });
 
-        applySettings();
+        // Panel list
+        const ul = document.getElementById('bmList');
+        if (!list.length) {
+            ul.innerHTML = '<li class="bm-empty">No bookmarks yet.<br>Click "Add bookmark here" to save<br>your current reading position.</li>';
+            return;
+        }
+        ul.innerHTML = '';
+        list.forEach((bm, idx) => {
+            const li = document.createElement('li');
+            const item = document.createElement('div');
+            item.className = 'bm-item';
+            item.innerHTML =
+                `<span class="bm-pct">${escHtml(String(bm.pct))}%</span>` +
+                `<span class="bm-label" title="${escHtml(bm.label)}">${escHtml(bm.label)}</span>` +
+                `<span class="bm-del" title="Delete">&times;</span>`;
+            item.querySelector('.bm-pct').addEventListener('click', () => scrollToBm(bm.pct));
+            item.querySelector('.bm-label').addEventListener('click', () => scrollToBm(bm.pct));
+            item.querySelector('.bm-del').addEventListener('click', e => {
+                e.stopPropagation();
+                deleteBm(idx);
+            });
+            li.appendChild(item);
+            ul.appendChild(li);
+        });
+    }
+
+    let bmPanelOpen = false;
+
+    function toggleBmPanel() {
+        bmPanelOpen = !bmPanelOpen;
+        document.getElementById('bmPanel').classList.toggle('open', bmPanelOpen);
+        document.getElementById('bmBtn').classList.toggle('active', bmPanelOpen);
+    }
+
+    // ── Init ───────────────────────────────────────────────────────────────
+    applySettings();
+    renderBm();
     </script>
 </body>
 </html>
