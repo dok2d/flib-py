@@ -45,6 +45,9 @@
             background-color: var(--background-color);
             box-shadow: 0 0 10px rgba(0,0,0,0.1); }
 
+        /* Actions column: никогда не обрезать (иначе dropdown clipped) */
+        td.actions-td { overflow: visible; max-width: none; white-space: nowrap; }
+
         th, td { padding: 16px 20px; text-align: left;
             border-bottom: 1px solid var(--border-color); }
 
@@ -160,6 +163,10 @@
         .bm-remove-btn { background: none; border: none; cursor: pointer; color: #bbb;
             font-size: 20px; line-height: 1; padding: 0 4px; transition: color 0.15s; }
         .bm-remove-btn:hover { color: #c44; }
+
+        /* bm-item: position:relative нужен чтобы z-index работал и dropdown не уходил под соседние строки */
+        .bm-item { position: relative; z-index: 0; }
+        .bm-item:has(.dl-menu.open) { z-index: 10; }
 
         /* ── Download dropdown ── */
         .dl-dd { position: relative; display: inline-flex; }
@@ -351,14 +358,19 @@ function bmRefreshPanel() {
         const readBtn = b.read_link
             ? `<a href="${escapeHtml(b.read_link)}" class="download-link read-link" style="padding:4px 8px;font-size:12px" title="Read online">📖</a>`
             : '';
-        const dlBtn = b.convert_base
+        // convert_base может отсутствовать у старых закладок — восстанавливаем из link
+        const cb = b.convert_base ||
+            (b.link && b.link.toLowerCase().includes('.fb2')
+                ? b.link.replace('/download/', '/convert/')
+                : null);
+        const dlBtn = cb
             ? `<div class="dl-dd">
                 <button onclick="toggleDl(this,event)" style="padding:4px 8px;font-size:12px" title="Download">⬇</button>
                 <div class="dl-menu">
                     <a href="${escapeHtml(b.link)}">FB2</a>
-                    <a href="${escapeHtml(b.convert_base)}/to/txt">TXT</a>
-                    <a href="${escapeHtml(b.convert_base)}/to/epub">EPUB</a>
-                    <a href="${escapeHtml(b.convert_base)}/to/pdf">PDF</a>
+                    <a href="${escapeHtml(cb)}/to/txt">TXT</a>
+                    <a href="${escapeHtml(cb)}/to/epub">EPUB</a>
+                    <a href="${escapeHtml(cb)}/to/pdf">PDF</a>
                 </div>
                </div>`
             : `<a href="${escapeHtml(b.link)}" class="download-link" style="padding:4px 8px;font-size:12px" title="Download">⬇</a>`;
@@ -529,7 +541,7 @@ function displayResults(results) {
         row.innerHTML = `
             <td class="title-cell"  title="${escapeHtml(doc.title)}"><strong>${escapeHtml(doc.title)}</strong></td>
             <td class="author-cell" title="${escapeHtml(doc.author)}">${escapeHtml(doc.author)}</td>
-            <td>
+            <td class="actions-td">
                 <div class="action-buttons">
                     ${dlMenu}
                     ${readBtn}
