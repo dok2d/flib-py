@@ -177,7 +177,7 @@
             top: calc(100% + 4px); left: 0;
             background: white; border: 1px solid var(--border-color);
             border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-            z-index: 200; overflow: hidden; min-width: 70px;
+            z-index: 500; overflow: hidden; min-width: 70px;
         }
         .dl-dd .dl-menu.open { display: block; }
         .dl-dd .dl-menu a {
@@ -351,6 +351,17 @@ function bmRefreshPanel() {
         const readBtn = b.read_link
             ? `<a href="${escapeHtml(b.read_link)}" class="download-link read-link" style="padding:4px 8px;font-size:12px" title="Read online">📖</a>`
             : '';
+        const dlBtn = b.convert_base
+            ? `<div class="dl-dd">
+                <button onclick="toggleDl(this,event)" style="padding:4px 8px;font-size:12px" title="Download">⬇</button>
+                <div class="dl-menu">
+                    <a href="${escapeHtml(b.link)}">FB2</a>
+                    <a href="${escapeHtml(b.convert_base)}/to/txt">TXT</a>
+                    <a href="${escapeHtml(b.convert_base)}/to/epub">EPUB</a>
+                    <a href="${escapeHtml(b.convert_base)}/to/pdf">PDF</a>
+                </div>
+               </div>`
+            : `<a href="${escapeHtml(b.link)}" class="download-link" style="padding:4px 8px;font-size:12px" title="Download">⬇</a>`;
         html += `
         <div class="bm-item">
             <div class="bm-item-info">
@@ -358,7 +369,7 @@ function bmRefreshPanel() {
                 <div class="bm-item-author">${escapeHtml(b.author)}</div>
             </div>
             <div class="bm-item-actions">
-                <a href="${escapeHtml(b.link)}" class="download-link" style="padding:4px 8px;font-size:12px" title="Download">⬇</a>
+                ${dlBtn}
                 ${readBtn}
                 <button class="bm-remove-btn" onclick="bmRemove(${Number(b.id)})" title="Remove">×</button>
             </div>
