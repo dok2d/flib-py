@@ -168,6 +168,9 @@
         .bm-item { position: relative; z-index: 0; }
         .bm-item:has(.dl-menu.open) { z-index: 10; }
 
+        /* tr с открытым dropdown поднимаем над соседними строками */
+        tr.z-top { position: relative; z-index: 10; }
+
         /* ── Download dropdown ── */
         .dl-dd { position: relative; display: inline-flex; }
         .dl-dd > button {
@@ -605,15 +608,24 @@ function updatePagination(totalPages) {
 }
 
 /* ── Download dropdown ── */
+function _closeDlMenus(except) {
+    document.querySelectorAll('.dl-dd .dl-menu.open').forEach(m => {
+        if (m === except) return;
+        m.classList.remove('open');
+        m.closest('tr')?.classList.remove('z-top');
+    });
+}
 function toggleDl(btn, e) {
     e.stopPropagation();
     const menu = btn.nextElementSibling;
-    document.querySelectorAll('.dl-dd .dl-menu.open').forEach(m => { if (m !== menu) m.classList.remove('open'); });
-    menu.classList.toggle('open');
+    const opening = !menu.classList.contains('open');
+    _closeDlMenus(null);
+    if (opening) {
+        menu.classList.add('open');
+        btn.closest('tr')?.classList.add('z-top');
+    }
 }
-document.addEventListener('click', () => {
-    document.querySelectorAll('.dl-dd .dl-menu.open').forEach(m => m.classList.remove('open'));
-});
+document.addEventListener('click', () => { _closeDlMenus(null); });
 
 /* ── Column sort click ── */
 function setupSorting() {
