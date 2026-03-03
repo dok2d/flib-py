@@ -161,6 +161,33 @@
             font-size: 20px; line-height: 1; padding: 0 4px; transition: color 0.15s; }
         .bm-remove-btn:hover { color: #c44; }
 
+        /* ── Download dropdown ── */
+        .dl-dd { position: relative; display: inline-flex; }
+        .dl-dd > button {
+            display: inline-flex; align-items: center;
+            color: var(--primary-color); font-weight: 500;
+            padding: 5px 10px; border-radius: 6px;
+            background: rgba(67,97,238,0.1); font-size: 13px;
+            border: none; cursor: pointer; transition: all 0.2s;
+            font-family: inherit;
+        }
+        .dl-dd > button:hover { color: white; background: var(--primary-color); }
+        .dl-dd .dl-menu {
+            display: none; position: absolute;
+            top: calc(100% + 4px); left: 0;
+            background: white; border: 1px solid var(--border-color);
+            border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            z-index: 200; overflow: hidden; min-width: 70px;
+        }
+        .dl-dd .dl-menu.open { display: block; }
+        .dl-dd .dl-menu a {
+            display: block; padding: 7px 14px;
+            color: var(--text-color); text-decoration: none;
+            font-size: 13px; font-weight: 500; white-space: nowrap;
+            transition: background 0.15s;
+        }
+        .dl-dd .dl-menu a:hover { background: var(--primary-color); color: white; }
+
         /* ── Pagination ── */
         .pagination { display: flex; justify-content: center; margin-top: 30px;
             gap: 6px; flex-wrap: wrap; }
@@ -476,20 +503,25 @@ function displayResults(results) {
         const readBtn  = doc.read_link
             ? `<a href="${escapeHtml(doc.read_link)}" class="download-link read-link" title="Read online">📖 Read</a>`
             : '';
-        const convertBtns = doc.convert_base
-            ? `<a href="${escapeHtml(doc.convert_base)}/to/txt"  class="download-link txt-link"  title="Download TXT">⬇ TXT</a>` +
-              `<a href="${escapeHtml(doc.convert_base)}/to/epub" class="download-link epub-link" title="Download EPUB">⬇ EPUB</a>` +
-              `<a href="${escapeHtml(doc.convert_base)}/to/pdf"  class="download-link pdf-link"  title="Download PDF">⬇ PDF</a>`
-            : '';
+        const dlMenu = doc.convert_base
+            ? `<div class="dl-dd">
+                <button onclick="toggleDl(this,event)" title="Download">⬇</button>
+                <div class="dl-menu">
+                    <a href="${escapeHtml(doc.link)}">FB2</a>
+                    <a href="${escapeHtml(doc.convert_base)}/to/txt">TXT</a>
+                    <a href="${escapeHtml(doc.convert_base)}/to/epub">EPUB</a>
+                    <a href="${escapeHtml(doc.convert_base)}/to/pdf">PDF</a>
+                </div>
+               </div>`
+            : `<a href="${escapeHtml(doc.link)}" class="download-link" title="Download FB2">⬇ FB2</a>`;
 
         row.innerHTML = `
             <td class="title-cell"  title="${escapeHtml(doc.title)}"><strong>${escapeHtml(doc.title)}</strong></td>
             <td class="author-cell" title="${escapeHtml(doc.author)}">${escapeHtml(doc.author)}</td>
             <td>
                 <div class="action-buttons">
-                    <a href="${escapeHtml(doc.link)}" class="download-link" title="Download">⬇ FB2</a>
+                    ${dlMenu}
                     ${readBtn}
-                    ${convertBtns}
                     <button class="bm-star ${isSaved ? 'saved' : ''}" data-id="${escapeHtml(String(doc.id))}"
                             title="${isSaved ? 'Remove bookmark' : 'Bookmark'}">
                         ${isSaved ? '⭐' : '☆'}</button>
@@ -548,6 +580,17 @@ function updatePagination(totalPages) {
     if (e < totalPages) { if (e < totalPages - 1) pg.appendChild(ellipsis()); pg.appendChild(btn(totalPages, totalPages)); }
     pg.appendChild(btn('›', currentPage + 1, currentPage === totalPages));
 }
+
+/* ── Download dropdown ── */
+function toggleDl(btn, e) {
+    e.stopPropagation();
+    const menu = btn.nextElementSibling;
+    document.querySelectorAll('.dl-dd .dl-menu.open').forEach(m => { if (m !== menu) m.classList.remove('open'); });
+    menu.classList.toggle('open');
+}
+document.addEventListener('click', () => {
+    document.querySelectorAll('.dl-dd .dl-menu.open').forEach(m => m.classList.remove('open'));
+});
 
 /* ── Column sort click ── */
 function setupSorting() {

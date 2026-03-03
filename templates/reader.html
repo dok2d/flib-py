@@ -93,27 +93,29 @@
             background: var(--toolbar-bg);
             backdrop-filter: blur(6px);
             border-bottom: 1px solid var(--border);
-            padding: 8px 16px;
+            padding: 6px 12px;
             display: flex;
             align-items: center;
-            gap: 6px;
-            flex-wrap: wrap;
+            gap: 4px;
+            flex-wrap: nowrap;
             z-index: 200;
+            overflow: hidden;
         }
 
         .toolbar a,
         .toolbar button {
-            padding: 5px 12px;
+            padding: 5px 9px;
             border-radius: 6px;
             border: 1px solid var(--border);
             background: transparent;
             color: var(--text);
             cursor: pointer;
-            font-size: 13px;
+            font-size: 14px;
             text-decoration: none;
             transition: background 0.15s, color 0.15s, border-color 0.15s;
             font-family: 'Segoe UI', sans-serif;
             white-space: nowrap;
+            flex-shrink: 0;
         }
 
         .toolbar a:hover,
@@ -131,7 +133,7 @@
 
         .book-title {
             font-weight: bold;
-            font-size: 14px;
+            font-size: 13px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -139,7 +141,7 @@
         }
 
         .book-author {
-            font-size: 12px;
+            font-size: 11px;
             color: var(--dim);
             font-family: 'Segoe UI', sans-serif;
         }
@@ -147,14 +149,70 @@
         .font-controls {
             display: flex;
             align-items: center;
-            gap: 3px;
+            gap: 2px;
+            flex-shrink: 0;
         }
 
         .font-controls span {
-            font-size: 12px;
-            min-width: 36px;
+            font-size: 11px;
+            min-width: 30px;
             text-align: center;
             font-family: 'Segoe UI', sans-serif;
+        }
+
+        /* ── Download dropdown ─────────────────────────────────────── */
+        .dl-dropdown { position: relative; flex-shrink: 0; }
+
+        .dl-menu {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            z-index: 250;
+            min-width: 76px;
+            overflow: hidden;
+        }
+
+        .dl-menu.open { display: block; }
+
+        .dl-menu a {
+            display: block;
+            padding: 8px 14px;
+            color: var(--text);
+            text-decoration: none;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 13px;
+            white-space: nowrap;
+            transition: background 0.15s;
+        }
+
+        .dl-menu a:hover { background: var(--link); color: #fff; }
+
+        /* ── Sidebar close button ──────────────────────────────────── */
+        .sidebar-close {
+            position: absolute;
+            top: 14px;
+            right: 12px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            color: var(--dim);
+            font-size: 14px;
+            padding: 3px 8px;
+            line-height: 1;
+            font-family: 'Segoe UI', sans-serif;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+        }
+
+        .sidebar-close:hover {
+            background: rgba(192,57,43,0.1);
+            color: #c0392b;
+            border-color: #c0392b;
         }
 
         /* ── TOC sidebar ────────────────────────────────────────────── */
@@ -167,7 +225,7 @@
             border-right: 1px solid var(--border);
             overflow-y: auto;
             z-index: 500;
-            transform: translateX(-280px);
+            transform: translateX(-100%);
             transition: transform 0.3s ease;
             padding: 52px 0 20px;
         }
@@ -230,7 +288,7 @@
             border-left: 1px solid var(--border);
             overflow-y: auto;
             z-index: 500;
-            transform: translateX(300px);
+            transform: translateX(100%);
             transition: transform 0.3s ease;
             padding: 52px 0 20px;
         }
@@ -246,6 +304,16 @@
             text-transform: uppercase;
             letter-spacing: 0.07em;
         }
+
+        .bm-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.35);
+            z-index: 490;
+        }
+
+        .bm-overlay.vis { display: block; }
 
         .bm-add-here {
             display: block;
@@ -486,6 +554,7 @@
             .toc-sidebar,
             .toc-overlay,
             .bm-panel,
+            .bm-overlay,
             .bm-popup,
             .popup-overlay { display: none !important; }
 
@@ -496,8 +565,11 @@
 
         @media (max-width: 600px) {
             .content { padding: 20px 14px 80px; }
-            .toolbar { padding: 6px 10px; gap: 4px; }
+            .toolbar { padding: 5px 8px; gap: 3px; }
             .toc-sidebar { width: 85vw; }
+            .bm-panel { width: 90vw; }
+            #fsLabel { display: none; }
+            #printBtn { display: none; }
         }
     </style>
 </head>
@@ -507,24 +579,34 @@
         <div class="progress-fill" id="progressFill"></div>
     </div>
 
-    <!-- TOC overlay (mobile tap-to-close) -->
+    <!-- TOC overlay (tap-to-close) -->
     <div class="toc-overlay" id="tocOverlay" onclick="closeToc()"></div>
+
+    <!-- Bookmark panel overlay (tap-to-close) -->
+    <div class="bm-overlay" id="bmOverlay" onclick="closeBmPanel()"></div>
 
     <!-- TOC sidebar -->
     <aside class="toc-sidebar" id="tocSidebar">
+        <button class="sidebar-close" onclick="closeToc()" title="Close">✕</button>
         <h3>Contents</h3>
         <ul id="tocList"></ul>
     </aside>
 
     <!-- Toolbar -->
     <div class="toolbar">
-        <a href="/">← Back</a>
-        <a href="{{ download_link | e }}" title="Download FB2">⬇ FB2</a>
-        {% if convert_base %}
-        <a href="{{ convert_base | e }}/to/txt" title="Download TXT">⬇ TXT</a>
-        <a href="{{ convert_base | e }}/to/epub" title="Download EPUB">⬇ EPUB</a>
-        <a href="{{ convert_base | e }}/to/pdf" title="Download PDF">⬇ PDF</a>
-        {% endif %}
+        <a href="/">←</a>
+
+        <div class="dl-dropdown" id="dlDropdown">
+            <button onclick="toggleDlMenu(event)" title="Download">⬇</button>
+            <div class="dl-menu" id="dlMenu">
+                <a href="{{ download_link | e }}">FB2</a>
+                {% if convert_base %}
+                <a href="{{ convert_base | e }}/to/txt">TXT</a>
+                <a href="{{ convert_base | e }}/to/epub">EPUB</a>
+                <a href="{{ convert_base | e }}/to/pdf">PDF</a>
+                {% endif %}
+            </div>
+        </div>
 
         <div class="book-info">
             <div class="book-title">{{ book_title | e }}</div>
@@ -532,17 +614,17 @@
         </div>
 
         <div class="font-controls">
-            <button onclick="changeFontSize(-2)" title="Decrease font size">A−</button>
+            <button onclick="changeFontSize(-2)" title="Decrease font size">−</button>
             <span id="fsLabel"></span>
-            <button onclick="changeFontSize(2)" title="Increase font size">A+</button>
+            <button onclick="changeFontSize(2)" title="Increase font size">+</button>
         </div>
 
         <button onclick="toggleNight()" id="nightBtn"></button>
         {% if toc %}
-        <button onclick="toggleToc()" id="tocBtn" title="Table of contents">☰ TOC</button>
+        <button onclick="toggleToc()" id="tocBtn" title="Table of contents">☰</button>
         {% endif %}
         <button onclick="toggleBmPanel()" id="bmBtn" title="Bookmarks">🔖</button>
-        <button onclick="window.print()" title="Print / Save as PDF">🖨</button>
+        <button id="printBtn" onclick="window.print()" title="Print / Save as PDF">🖨</button>
     </div>
 
     <!-- Content -->
@@ -554,6 +636,7 @@
 
     <!-- Bookmark panel -->
     <aside class="bm-panel" id="bmPanel">
+        <button class="sidebar-close" onclick="closeBmPanel()" title="Close">✕</button>
         <h3>Bookmarks</h3>
         <button class="bm-add-here" onclick="addBmHere()">+ Add bookmark here</button>
         <ul class="bm-list" id="bmList"></ul>
@@ -591,7 +674,9 @@
         document.documentElement.style.setProperty('--font-size', fontSize + 'px');
         document.getElementById('fsLabel').textContent = fontSize + 'px';
         document.body.classList.toggle('night', isNight);
-        document.getElementById('nightBtn').textContent = isNight ? '☀ Day' : '🌙 Night';
+        const btn = document.getElementById('nightBtn');
+        btn.textContent = isNight ? '☀' : '🌙';
+        btn.title = isNight ? 'Day mode' : 'Night mode';
     }
 
     function changeFontSize(d) {
@@ -612,12 +697,21 @@
         updateTocHighlight();
     }, { passive: true });
 
-    // Click on progress track to seek (unless clicking a dot)
     document.getElementById('progressTrack').addEventListener('click', (e) => {
         if (e.target.classList.contains('bm-dot')) return;
         const pct = e.clientX / window.innerWidth * 100;
         const total = document.documentElement.scrollHeight - window.innerHeight;
         window.scrollTo({ top: pct / 100 * total, behavior: 'instant' });
+    });
+
+    // ── Download dropdown ──────────────────────────────────────────────────
+    function toggleDlMenu(e) {
+        e.stopPropagation();
+        document.getElementById('dlMenu').classList.toggle('open');
+    }
+
+    document.addEventListener('click', () => {
+        document.getElementById('dlMenu').classList.remove('open');
     });
 
     // ── TOC ────────────────────────────────────────────────────────────────
@@ -639,7 +733,7 @@
                 ev.preventDefault();
                 const el = document.getElementById(e.id);
                 if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                if (window.innerWidth < 768) closeToc();
+                closeToc();
             });
             li.appendChild(a);
             ul.appendChild(li);
@@ -664,6 +758,7 @@
     let tocOpen = false;
 
     function toggleToc() {
+        if (!tocOpen) closeBmPanel();
         tocOpen = !tocOpen;
         document.getElementById('tocSidebar').classList.toggle('open', tocOpen);
         document.getElementById('tocOverlay').classList.toggle('vis', tocOpen);
@@ -791,14 +886,87 @@
     let bmPanelOpen = false;
 
     function toggleBmPanel() {
+        if (!bmPanelOpen) closeToc();
         bmPanelOpen = !bmPanelOpen;
         document.getElementById('bmPanel').classList.toggle('open', bmPanelOpen);
         document.getElementById('bmBtn').classList.toggle('active', bmPanelOpen);
+        document.getElementById('bmOverlay').classList.toggle('vis', bmPanelOpen);
     }
+
+    function closeBmPanel() {
+        bmPanelOpen = false;
+        document.getElementById('bmPanel').classList.remove('open');
+        document.getElementById('bmBtn').classList.remove('active');
+        document.getElementById('bmOverlay').classList.remove('vis');
+    }
+
+    // ── Keyboard navigation ────────────────────────────────────────────────
+    // ↑/↓ — обычная прокрутка браузера (фокус на body обеспечен ниже)
+    // →/PageDown — на экран вниз (мгновенно)
+    // ←/PageUp  — на экран вверх (мгновенно)
+    document.addEventListener('keydown', e => {
+        const tag = document.activeElement.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+        if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+            e.preventDefault();
+            window.scrollBy({ top: window.innerHeight * 0.9, behavior: 'instant' });
+        } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+            e.preventDefault();
+            window.scrollBy({ top: -window.innerHeight * 0.9, behavior: 'instant' });
+        }
+    });
+
+    // ── Mobile tap zones ───────────────────────────────────────────────────
+    // Два невидимых блока: левый (0–10% ширины) и правый (90–100% ширины),
+    // каждый на всю высоту экрана. Не перекрывают выдвинутые сайдбары.
+    // Верхние 70% блока → экран вниз; нижние 30% → экран вверх.
+    let _tx = null, _ty = null, _tt = null;
+
+    document.addEventListener('touchstart', e => {
+        _tx = e.touches[0].clientX;
+        _ty = e.touches[0].clientY;
+        _tt = Date.now();
+    }, { passive: true });
+
+    document.addEventListener('touchend', e => {
+        if (_tx === null) return;
+        const ex = e.changedTouches[0].clientX;
+        const ey = e.changedTouches[0].clientY;
+        const dx = Math.abs(ex - _tx);
+        const dy = Math.abs(ey - _ty);
+        const dt = Date.now() - _tt;
+        _tx = _ty = _tt = null;
+
+        // Только быстрый тап без движения
+        if (dx > 10 || dy > 10 || dt > 350) return;
+
+        // Сайдбары открыты — тапы их оверлеи перехватят сами
+        if (tocOpen || bmPanelOpen) return;
+
+        // Не перехватываем тапы по кнопкам/ссылкам/тулбару
+        if (e.target.closest('a, button, input, .toolbar, .progress-track')) return;
+
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+
+        // Зоны: левые 10% и правые 10% ширины экрана
+        if (ex < w * 0.10 || ex > w * 0.90) {
+            if (ey < h * 0.70) {
+                // Верхние 70% зоны → вперёд (вниз)
+                window.scrollBy({ top: window.innerHeight * 0.9, behavior: 'instant' });
+            } else {
+                // Нижние 30% зоны → назад (вверх)
+                window.scrollBy({ top: -window.innerHeight * 0.9, behavior: 'instant' });
+            }
+        }
+    }, { passive: true });
 
     // ── Init ───────────────────────────────────────────────────────────────
     applySettings();
     renderBm();
+    // Фокус на body, чтобы стрелки сразу работали без клика
+    document.body.tabIndex = -1;
+    document.body.focus();
     </script>
 </body>
 </html>
