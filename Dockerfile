@@ -2,6 +2,10 @@ FROM python:3.9-slim
 
 RUN apt-get update && apt-get install -y \
     unzip \
+    libpango-1.0-0 \
+    libpangoft2-1.0-0 \
+    libharfbuzz0b \
+    fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
 
 RUN adduser --disabled-password --gecos '' appuser

@@ -45,6 +45,9 @@
             background-color: var(--background-color);
             box-shadow: 0 0 10px rgba(0,0,0,0.1); }
 
+        /* Actions column: никогда не обрезать (иначе dropdown clipped) */
+        td.actions-td { overflow: visible; max-width: none; white-space: nowrap; }
+
         th, td { padding: 16px 20px; text-align: left;
             border-bottom: 1px solid var(--border-color); }
 
@@ -83,6 +86,13 @@
 
         .read-link { background-color: rgba(0,160,80,0.1); }
         .read-link:hover { background-color: #00a050; color: white; }
+
+        .txt-link  { background-color: rgba(100,160,80,0.1); }
+        .txt-link:hover  { background-color: #64a050; color: white; }
+        .epub-link { background-color: rgba(180,100,0,0.1); }
+        .epub-link:hover { background-color: #b46400; color: white; }
+        .pdf-link  { background-color: rgba(180,40,40,0.1); }
+        .pdf-link:hover  { background-color: #b42828; color: white; }
 
         /* ── Bookmark star button ── */
         .bm-star { background: none; border: none; cursor: pointer; font-size: 16px;
@@ -153,6 +163,40 @@
         .bm-remove-btn { background: none; border: none; cursor: pointer; color: #bbb;
             font-size: 20px; line-height: 1; padding: 0 4px; transition: color 0.15s; }
         .bm-remove-btn:hover { color: #c44; }
+
+        /* bm-item: position:relative нужен чтобы z-index работал и dropdown не уходил под соседние строки */
+        .bm-item { position: relative; z-index: 0; }
+        .bm-item:has(.dl-menu.open) { z-index: 10; }
+
+        /* tr с открытым dropdown поднимаем над соседними строками */
+        tr.z-top { position: relative; z-index: 10; }
+
+        /* ── Download dropdown ── */
+        .dl-dd { position: relative; display: inline-flex; }
+        .dl-dd > button {
+            display: inline-flex; align-items: center;
+            color: var(--primary-color); font-weight: 500;
+            padding: 5px 10px; border-radius: 6px;
+            background: rgba(67,97,238,0.1); font-size: 13px;
+            border: none; cursor: pointer; transition: all 0.2s;
+            font-family: inherit;
+        }
+        .dl-dd > button:hover { color: white; background: var(--primary-color); }
+        .dl-dd .dl-menu {
+            display: none; position: absolute;
+            top: calc(100% + 4px); left: 0;
+            background: white; border: 1px solid var(--border-color);
+            border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            z-index: 500; overflow: hidden; min-width: 70px;
+        }
+        .dl-dd .dl-menu.open { display: block; }
+        .dl-dd .dl-menu a {
+            display: block; padding: 7px 14px;
+            color: var(--text-color); text-decoration: none;
+            font-size: 13px; font-weight: 500; white-space: nowrap;
+            transition: background 0.15s;
+        }
+        .dl-dd .dl-menu a:hover { background: var(--primary-color); color: white; }
 
         /* ── Pagination ── */
         .pagination { display: flex; justify-content: center; margin-top: 30px;
@@ -269,7 +313,8 @@ function bmToggle(doc) {
     const idx  = list.findIndex(b => b.id == doc.id);
     if (idx >= 0) { list.splice(idx, 1); }
     else { list.push({ id: doc.id, title: doc.title, author: doc.author,
-                       link: doc.link, read_link: doc.read_link || null }); }
+                       link: doc.link, read_link: doc.read_link || null,
+                       convert_base: doc.convert_base || null }); }
     bmSave(list);
     bmRefreshPanel();
     bmRefreshToggle();
@@ -316,6 +361,22 @@ function bmRefreshPanel() {
         const readBtn = b.read_link
             ? `<a href="${escapeHtml(b.read_link)}" class="download-link read-link" style="padding:4px 8px;font-size:12px" title="Read online">📖</a>`
             : '';
+        // convert_base может отсутствовать у старых закладок — восстанавливаем из link
+        const cb = b.convert_base ||
+            (b.link && b.link.toLowerCase().includes('.fb2')
+                ? b.link.replace('/download/', '/convert/')
+                : null);
+        const dlBtn = cb
+            ? `<div class="dl-dd">
+                <button onclick="toggleDl(this,event)" style="padding:4px 8px;font-size:12px" title="Download">⬇</button>
+                <div class="dl-menu">
+                    <a href="${escapeHtml(b.link)}">FB2</a>
+                    <a href="${escapeHtml(cb)}/to/txt">TXT</a>
+                    <a href="${escapeHtml(cb)}/to/epub">EPUB</a>
+                    <a href="${escapeHtml(cb)}/to/pdf">PDF</a>
+                </div>
+               </div>`
+            : `<a href="${escapeHtml(b.link)}" class="download-link" style="padding:4px 8px;font-size:12px" title="Download">⬇</a>`;
         html += `
         <div class="bm-item">
             <div class="bm-item-info">
@@ -323,7 +384,7 @@ function bmRefreshPanel() {
                 <div class="bm-item-author">${escapeHtml(b.author)}</div>
             </div>
             <div class="bm-item-actions">
-                <a href="${escapeHtml(b.link)}" class="download-link" style="padding:4px 8px;font-size:12px" title="Download">⬇</a>
+                ${dlBtn}
                 ${readBtn}
                 <button class="bm-remove-btn" onclick="bmRemove(${Number(b.id)})" title="Remove">×</button>
             </div>
@@ -380,18 +441,20 @@ document.addEventListener('DOMContentLoaded', () => {
 let documents = [
 {% for result in results %}
     {% set dl = "/download/" ~ result[9] ~ "/" ~ result[3]|string ~ "." ~ result[5] %}
-    {% set rl = "/read/" ~ result[9] ~ "/" ~ result[3]|string ~ "." ~ result[5] if result[5].lower() == 'fb2' else none %}
+    {% set rl = "/read/"     ~ result[9] ~ "/" ~ result[3]|string ~ "." ~ result[5] if result[5].lower() == 'fb2' else none %}
+    {% set cb = "/convert/"  ~ result[9] ~ "/" ~ result[3]|string ~ "." ~ result[5] if result[5].lower() == 'fb2' else none %}
     {
-        id:       {{ result[3] | tojson }},
-        title:    {{ result[2] | tojson }},
-        author:   {{ result[0] | tojson }},
-        genre:    {{ result[1] | tojson }},
-        size:     {{ size_format(result[4]) | tojson }},
-        date:     {{ result[6] | tojson }},
-        language: {{ result[7] | tojson }},
-        tags:     {{ ([result[8]] if result[8] else []) | tojson }},
-        link:     {{ dl | tojson }},
-        read_link:{{ rl | tojson }}
+        id:           {{ result[3] | tojson }},
+        title:        {{ result[2] | tojson }},
+        author:       {{ result[0] | tojson }},
+        genre:        {{ result[1] | tojson }},
+        size:         {{ size_format(result[4]) | tojson }},
+        date:         {{ result[6] | tojson }},
+        language:     {{ result[7] | tojson }},
+        tags:         {{ ([result[8]] if result[8] else []) | tojson }},
+        link:         {{ dl | tojson }},
+        read_link:    {{ rl | tojson }},
+        convert_base: {{ cb | tojson }}
     }{% if not loop.last %},{% endif %}
 {% endfor %}
 ];
@@ -466,13 +529,24 @@ function displayResults(results) {
         const readBtn  = doc.read_link
             ? `<a href="${escapeHtml(doc.read_link)}" class="download-link read-link" title="Read online">📖 Read</a>`
             : '';
+        const dlMenu = doc.convert_base
+            ? `<div class="dl-dd">
+                <button onclick="toggleDl(this,event)" title="Download">⬇</button>
+                <div class="dl-menu">
+                    <a href="${escapeHtml(doc.link)}">FB2</a>
+                    <a href="${escapeHtml(doc.convert_base)}/to/txt">TXT</a>
+                    <a href="${escapeHtml(doc.convert_base)}/to/epub">EPUB</a>
+                    <a href="${escapeHtml(doc.convert_base)}/to/pdf">PDF</a>
+                </div>
+               </div>`
+            : `<a href="${escapeHtml(doc.link)}" class="download-link" title="Download FB2">⬇ FB2</a>`;
 
         row.innerHTML = `
             <td class="title-cell"  title="${escapeHtml(doc.title)}"><strong>${escapeHtml(doc.title)}</strong></td>
             <td class="author-cell" title="${escapeHtml(doc.author)}">${escapeHtml(doc.author)}</td>
-            <td>
+            <td class="actions-td">
                 <div class="action-buttons">
-                    <a href="${escapeHtml(doc.link)}" class="download-link" title="Download">⬇ FB2</a>
+                    ${dlMenu}
                     ${readBtn}
                     <button class="bm-star ${isSaved ? 'saved' : ''}" data-id="${escapeHtml(String(doc.id))}"
                             title="${isSaved ? 'Remove bookmark' : 'Bookmark'}">
@@ -532,6 +606,26 @@ function updatePagination(totalPages) {
     if (e < totalPages) { if (e < totalPages - 1) pg.appendChild(ellipsis()); pg.appendChild(btn(totalPages, totalPages)); }
     pg.appendChild(btn('›', currentPage + 1, currentPage === totalPages));
 }
+
+/* ── Download dropdown ── */
+function _closeDlMenus(except) {
+    document.querySelectorAll('.dl-dd .dl-menu.open').forEach(m => {
+        if (m === except) return;
+        m.classList.remove('open');
+        m.closest('tr')?.classList.remove('z-top');
+    });
+}
+function toggleDl(btn, e) {
+    e.stopPropagation();
+    const menu = btn.nextElementSibling;
+    const opening = !menu.classList.contains('open');
+    _closeDlMenus(null);
+    if (opening) {
+        menu.classList.add('open');
+        btn.closest('tr')?.classList.add('z-top');
+    }
+}
+document.addEventListener('click', () => { _closeDlMenus(null); });
 
 /* ── Column sort click ── */
 function setupSorting() {

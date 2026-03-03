@@ -1,3 +1,4 @@
 flask==2.3.2
 python-telegram-bot>=20.0
 PyYAML>=6.0
+weasyprint>=60.0
